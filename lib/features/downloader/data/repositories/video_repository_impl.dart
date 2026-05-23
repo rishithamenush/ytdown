@@ -202,8 +202,12 @@ class VideoRepositoryImpl implements VideoRepository {
     } on DownloadCancelledException {
       rethrow;
     } finally {
+      // Best-effort: media_store_plus deletes the merged file itself on
+      // success, so PathNotFoundException here is expected.
       for (final f in [videoFile, audioFile, mergedFile]) {
-        if (await f.exists()) await f.delete();
+        try {
+          if (await f.exists()) await f.delete();
+        } catch (_) {}
       }
     }
   }
@@ -247,7 +251,10 @@ class VideoRepositoryImpl implements VideoRepository {
     } on DownloadCancelledException {
       rethrow;
     } finally {
-      if (await file.exists()) await file.delete();
+      // Best-effort: media_store_plus deletes the temp file itself on success.
+      try {
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
     }
   }
 
@@ -274,8 +281,12 @@ class VideoRepositoryImpl implements VideoRepository {
     }
   }
 
+  // '#' is stripped because media_store_plus parses the temp file path as a
+  // URI to derive the saved filename, and '#' would truncate it at the
+  // fragment delimiter. YouTube titles rarely contain it, but guarding here
+  // matches the TikTok repo and avoids a latent silent-failure mode.
   static String _safeName(String name) =>
-      name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+      name.replaceAll(RegExp(r'[\\/:*?"<>|#]'), '_');
 
   @override
   void dispose() => _remote.dispose();

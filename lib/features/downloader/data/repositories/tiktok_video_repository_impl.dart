@@ -142,15 +142,18 @@ class TiktokVideoRepositoryImpl implements VideoRepository {
     } on DownloadCancelledException {
       rethrow;
     } finally {
-      if (await file.exists()) await file.delete();
+      try {
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
     }
   }
 
   @override
   void dispose() {}
 
+
   static String _safeName(String name) =>
-      name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
+      name.replaceAll(RegExp(r'[\\/:*?"<>|#]'), '_').trim();
 
   static String _titleFrom(TiktokVideoData data) {
     final desc = data.title.trim();

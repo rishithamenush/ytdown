@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return _downloadTasks.any(
       (t) =>
           t.videoId == videoId &&
-          t.streamInfo.tag == _streams[index].info.tag &&
+          t.streamId == _streams[index].id &&
           t.isActive,
     );
   }
@@ -92,9 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
   DownloadTask? _taskForStream(int index) {
     final videoId = _video?.id.value;
     if (videoId == null) return null;
-    final tag = _streams[index].info.tag;
+    final streamId = _streams[index].id;
     for (final t in _downloadTasks) {
-      if (t.videoId == videoId && t.streamInfo.tag == tag) {
+      if (t.videoId == videoId && t.streamId == streamId) {
         return t;
       }
     }
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
       videoId: video.id.value,
       videoTitle: video.title,
       qualityLabel: option.label,
-      streamInfo: option.info,
+      streamId: option.id,
       isVideo: option.isVideo,
       cancelToken: DownloadCancelToken(),
     );
@@ -126,10 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _runDownload(DownloadTask task, DownloadableStream option) async {
     try {
-      final path = await _service.downloadStream(
-        streamInfo: option.info,
+      final path = await _service.downloadOption(
+        option: option,
         fileName: task.videoTitle,
-        isVideo: option.isVideo,
         fileSuffix: task.id,
         cancelToken: task.cancelToken,
         onProgress: (p) {
@@ -483,8 +482,8 @@ class _HomeScreenState extends State<HomeScreen> {
             }),
             const SizedBox(height: 8),
             Text(
-              'Muxed formats include video and audio (up to 360p). '
-              'Audio-only saves music or podcasts.',
+              'HD options download video and audio separately, then merge '
+              '(may take longer). 360p quick uses a single stream without merge.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

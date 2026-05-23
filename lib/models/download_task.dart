@@ -1,5 +1,3 @@
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
-
 import '../services/youtube_service.dart';
 
 enum DownloadTaskStatus { downloading, completed, cancelled, failed }
@@ -10,7 +8,7 @@ class DownloadTask {
     required this.videoId,
     required this.videoTitle,
     required this.qualityLabel,
-    required this.streamInfo,
+    required this.streamId,
     required this.isVideo,
     required this.cancelToken,
   });
@@ -19,7 +17,7 @@ class DownloadTask {
   final String videoId;
   final String videoTitle;
   final String qualityLabel;
-  final StreamInfo streamInfo;
+  final String streamId;
   final bool isVideo;
   final DownloadCancelToken cancelToken;
 

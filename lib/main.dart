@@ -1,11 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
+import 'services/merge_service.dart';
 import 'services/storage_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.ensureInitialized();
+  if (Platform.isAndroid || Platform.isIOS) {
+    await MergeService.ensureInitialized();
+  }
   runApp(const YtDownApp());
 }
 

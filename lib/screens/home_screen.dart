@@ -90,6 +90,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _clearSearch() {
+    _urlController.clear();
+    setState(() {
+      _video = null;
+      _streams = [];
+      _error = null;
+    });
+  }
+
   Future<void> _pasteFromClipboard() async {
     final data = await Clipboard.getData('text/plain');
     final text = data?.text?.trim();
@@ -250,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         loading: _loading,
                         onSubmit: _fetchVideo,
                         onPaste: _pasteFromClipboard,
+                        onClear: _clearSearch,
                       ),
                       const SizedBox(height: 14),
                       _GradientButton(
@@ -580,12 +590,14 @@ class _SearchField extends StatelessWidget {
     required this.loading,
     required this.onSubmit,
     required this.onPaste,
+    required this.onClear,
   });
 
   final TextEditingController controller;
   final bool loading;
   final VoidCallback onSubmit;
   final VoidCallback onPaste;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -624,7 +636,7 @@ class _SearchField extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.close_rounded, size: 20),
                   tooltip: 'Clear',
-                  onPressed: () => controller.clear(),
+                  onPressed: onClear,
                 ),
               IconButton(
                 icon: const Icon(Icons.content_paste_rounded, size: 20),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../models/download_task.dart';
+import '../services/background_download_service.dart';
 import '../services/youtube_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _service = YoutubeService();
   final _downloadTasks = <DownloadTask>[];
   int _taskIdCounter = 0;
+  DateTime _lastNotificationUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
   Video? _video;
   List<DownloadableStream> _streams = [];
@@ -106,6 +108,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final video = _video;
     if (video == null || _isStreamDownloading(index)) return;
 
+    await BackgroundDownloadService.requestPermissions();
+
     final task = DownloadTask(
       id: '${++_taskIdCounter}',
       videoId: video.id.value,
@@ -120,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _downloadTasks.insert(0, task);
       _error = null;
     });
+    _syncBackgroundService(force: true);
 
     unawaited(_runDownload(task, option));
   }
@@ -134,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onProgress: (p) {
           if (!mounted) return;
           setState(() => task.progress = p);
+          _syncBackgroundService();
         },
       );
 
@@ -151,7 +157,48 @@ class _HomeScreenState extends State<HomeScreen> {
         task.status = DownloadTaskStatus.failed;
         task.errorMessage = e.toString();
       });
+    } finally {
+      _syncBackgroundService(force: true);
     }
+  }
+
+  void _syncBackgroundService({bool force = false}) {
+    if (!BackgroundDownloadService.isSupported) return;
+    final active = _downloadTasks.where((t) => t.isActive).toList();
+    if (active.isEmpty) {
+      _lastNotificationUpdate = DateTime.fromMillisecondsSinceEpoch(0);
+      unawaited(BackgroundDownloadService.stop());
+      return;
+    }
+
+    final now = DateTime.now();
+    if (!force &&
+        now.difference(_lastNotificationUpdate).inMilliseconds < 750) {
+      return;
+    }
+    _lastNotificationUpdate = now;
+
+    final title = active.length == 1
+        ? 'Downloading 1 file'
+        : 'Downloading ${active.length} files';
+
+    final hasTotals = active.every((t) => t.progress.hasTotal);
+    String text;
+    if (active.length == 1) {
+      final t = active.first;
+      final p = t.progress;
+      text = p.hasTotal
+          ? '${p.percent}% · ${t.videoTitle}'
+          : 'Starting · ${t.videoTitle}';
+    } else if (hasTotals) {
+      final avg = active.fold<double>(0, (sum, t) => sum + t.progress.fraction) /
+          active.length;
+      text = '${(avg * 100).round()}% overall';
+    } else {
+      text = 'In progress…';
+    }
+
+    unawaited(BackgroundDownloadService.start(title: title, text: text));
   }
 
   Widget _buildTaskCard(ThemeData theme, DownloadTask task) {

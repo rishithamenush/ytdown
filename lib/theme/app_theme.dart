@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -87,7 +88,7 @@ class AppTheme {
     final textColor = scheme.onSurface;
     final mutedColor = scheme.onSurfaceVariant;
 
-    final textTheme = TextTheme(
+    final baseTextTheme = TextTheme(
       displaySmall: TextStyle(
         color: textColor,
         fontSize: 32,
@@ -133,6 +134,10 @@ class AppTheme {
       ),
     );
 
+    // Apply Plus Jakarta Sans across every text style — keeps the sizes/weights
+    // defined above and just swaps the font family.
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(baseTextTheme);
+
     return ThemeData(
       useMaterial3: true,
       brightness: scheme.brightness,
@@ -161,8 +166,14 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark ? const Color(0xFF15151C) : Colors.white,
-        hintStyle: TextStyle(color: mutedColor),
-        labelStyle: TextStyle(color: mutedColor),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: mutedColor,
+          fontWeight: FontWeight.w500,
+        ),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: mutedColor,
+          fontWeight: FontWeight.w500,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 18,
@@ -185,7 +196,7 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
@@ -198,7 +209,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: scheme.primary,
-          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
         ),
       ),
       chipTheme: ChipThemeData(

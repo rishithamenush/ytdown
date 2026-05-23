@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../models/download_task.dart';
@@ -502,7 +503,7 @@ class _TopBar extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     '$activeCount active',
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 12.5,
@@ -576,7 +577,7 @@ class _SearchField extends StatelessWidget {
       keyboardType: TextInputType.url,
       textInputAction: TextInputAction.search,
       onSubmitted: (_) => onSubmit(),
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: 'Paste video link here…',
         prefixIcon: Padding(
@@ -677,7 +678,7 @@ class _GradientButton extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 15.5,
@@ -852,10 +853,11 @@ class _VideoPreviewCard extends StatelessWidget {
                           ),
                           child: Text(
                             formattedDuration,
-                            style: const TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                         ),
@@ -1022,7 +1024,7 @@ class _QualityTile extends StatelessWidget {
                               ),
                               child: Text(
                                 _badge,
-                                style: TextStyle(
+                                style: GoogleFonts.plusJakartaSans(
                                   color: _badgeColor(),
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
@@ -1284,9 +1286,10 @@ class _DownloadTaskTile extends StatelessWidget {
             if (progress.hasTotal)
               Text(
                 '${progress.percent}',
-                style: const TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
           ],

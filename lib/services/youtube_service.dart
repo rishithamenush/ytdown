@@ -87,6 +87,20 @@ class DownloadableStream {
   final AudioOnlyStreamInfo? audioStream;
 
   bool get isMerged => videoStream != null && audioStream != null;
+
+  int? get videoHeight {
+    if (videoStream != null) return videoStream!.videoResolution.height;
+    final single = singleStream;
+    if (single is MuxedStreamInfo) return single.videoResolution.height;
+    return null;
+  }
+
+  int get estimatedSizeBytes {
+    if (videoStream != null && audioStream != null) {
+      return videoStream!.size.totalBytes + audioStream!.size.totalBytes;
+    }
+    return singleStream?.size.totalBytes ?? 0;
+  }
 }
 
 class YoutubeService {

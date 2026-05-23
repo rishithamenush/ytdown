@@ -135,11 +135,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                         const SizedBox(height: 28),
                         VideoPreviewCard(video: state.video!),
                         const SizedBox(height: 24),
-                        const SectionHeader(
+                        SectionHeader(
                           icon: Icons.high_quality_rounded,
                           title: 'Choose quality',
-                          subtitle:
-                              'Tap multiple to download in parallel. HD options merge video + audio.',
+                          subtitle: state.video!.isTikTok
+                              ? 'TikTok downloads save without watermark when available.'
+                              : 'Tap multiple to download in parallel. HD options merge video + audio.',
                         ),
                         const SizedBox(height: 12),
                         ...state.streams.map((stream) {

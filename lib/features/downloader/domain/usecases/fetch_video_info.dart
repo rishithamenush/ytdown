@@ -1,3 +1,4 @@
+import '../../../../core/utils/video_link_parser.dart';
 import '../entities/download_stream.dart';
 import '../entities/video_info.dart';
 import '../repositories/video_repository.dart';
@@ -12,7 +13,10 @@ class FetchVideoInfo {
   Future<FetchVideoResult> call(String urlOrId) async {
     final trimmed = urlOrId.trim();
     if (trimmed.isEmpty) {
-      throw ArgumentError('Paste a video link to get started');
+      throw ArgumentError('Paste a YouTube or TikTok video link');
+    }
+    if (VideoLinkParser.detect(trimmed) == null) {
+      throw ArgumentError('Unsupported link. Paste a YouTube or TikTok URL.');
     }
     final info = await _repository.getVideoInfo(trimmed);
     final streams = await _repository.getDownloadStreams(trimmed);

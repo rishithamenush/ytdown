@@ -96,6 +96,22 @@ class VideoPreviewCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    video.isTikTok ? 'TikTok' : 'YouTube',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Icon(
                   Icons.person_outline_rounded,
                   size: 16,

@@ -6,6 +6,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../../domain/entities/download_cancel_token.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
+import '../../../../core/utils/video_link_parser.dart';
 import '../../domain/entities/video_info.dart';
 import '../../domain/repositories/video_repository.dart';
 import '../datasources/youtube_remote_datasource.dart';
@@ -30,6 +31,7 @@ class VideoRepositoryImpl implements VideoRepository {
       author: video.author,
       thumbnailUrl: video.thumbnails.highResUrl,
       duration: video.duration,
+      platform: VideoSourcePlatform.youtube,
     );
   }
 

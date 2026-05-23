@@ -30,7 +30,7 @@ class HeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Paste a link to grab the highest quality video or audio, in seconds.',
+          'Paste a YouTube or TikTok link to download video or audio in seconds.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             fontSize: subSize,

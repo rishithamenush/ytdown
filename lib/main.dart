@@ -41,6 +41,20 @@ class VidooryApp extends StatelessWidget {
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
         home: const HomeScreen(),
+        builder: (context, child) {
+          // Clamp text scaling so very-large accessibility settings don't
+          // break the layout (very-small ones also feel broken to users).
+          final mq = MediaQuery.of(context);
+          return MediaQuery(
+            data: mq.copyWith(
+              textScaler: mq.textScaler.clamp(
+                minScaleFactor: 0.85,
+                maxScaleFactor: 1.3,
+              ),
+            ),
+            child: child!,
+          );
+        },
       ),
     );
   }

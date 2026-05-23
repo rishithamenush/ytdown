@@ -9,6 +9,7 @@ import '../models/download_task.dart';
 import '../services/background_download_service.dart';
 import '../services/youtube_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/responsive.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -222,6 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final activeCount = _downloadTasks.where((t) => t.isActive).length;
     final hasFinished = _downloadTasks.any((t) => !t.isActive);
+    final hPad = Responsive.horizontalPadding(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -238,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _TopBar(activeCount: activeCount),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
                   sliver: SliverList.list(
                     children: [
                       const _Hero(),
@@ -440,15 +442,19 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hPad = Responsive.horizontalPadding(context);
+    final logoSize = Responsive.scale(context, 56);
+    final iconSize = Responsive.scale(context, 32);
+    final titleSize = Responsive.scale(context, 26);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+      padding: EdgeInsets.fromLTRB(hPad, 18, hPad, 8),
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: logoSize,
+            height: logoSize,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(logoSize * 0.28),
               gradient: AppTheme.downloadGradient,
               boxShadow: [
                 BoxShadow(
@@ -458,10 +464,10 @@ class _TopBar extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.download_rounded,
               color: Colors.white,
-              size: 32,
+              size: iconSize,
             ),
           ),
           const SizedBox(width: 14),
@@ -475,7 +481,7 @@ class _TopBar extends StatelessWidget {
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.4,
-                    fontSize: 26,
+                    fontSize: titleSize,
                     height: 1.1,
                   ),
                 ),
@@ -532,6 +538,8 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final heroSize = Responsive.scale(context, 32);
+    final subSize = Responsive.scale(context, 14);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -545,6 +553,7 @@ class _Hero extends StatelessWidget {
               color: Colors.white,
               fontWeight: FontWeight.w800,
               height: 1.05,
+              fontSize: heroSize,
             ),
           ),
         ),
@@ -553,6 +562,7 @@ class _Hero extends StatelessWidget {
           'Paste a link to grab the highest quality video or audio, in seconds.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
+            fontSize: subSize,
           ),
         ),
       ],
@@ -645,10 +655,11 @@ class _GradientButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
+    final btnHeight = Responsive.scale(context, 56);
     return Opacity(
       opacity: enabled ? 1 : 0.65,
       child: SizedBox(
-        height: 56,
+        height: btnHeight,
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),

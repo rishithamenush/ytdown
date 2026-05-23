@@ -25,17 +25,17 @@ Future<void> main() async {
     await MergeService.ensureInitialized();
     await BackgroundDownloadService.ensureInitialized();
   }
-  runApp(const YtDownApp());
+  runApp(const VidooryApp());
 }
 
-class YtDownApp extends StatelessWidget {
-  const YtDownApp({super.key});
+class VidooryApp extends StatelessWidget {
+  const VidooryApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return WithForegroundTask(
       child: MaterialApp(
-        title: 'YT Down',
+        title: 'Vidoory',
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.dark,
         theme: AppTheme.light(),

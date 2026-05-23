@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchVideo() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
-      setState(() => _error = 'Paste a YouTube URL or video ID');
+      setState(() => _error = 'Paste a video link to get started');
       return;
     }
     FocusScope.of(context).unfocus();
@@ -319,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         }),
                         const SizedBox(height: 12),
                         Text(
-                          'Files save to Movies/YTDown (video) or Download/YTDown (audio).',
+                          'Files save to Movies/Vidoory (video) or Download/Vidoory (audio).',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall,
                         ),
@@ -448,19 +448,19 @@ class _TopBar extends StatelessWidget {
             height: 38,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: AppTheme.brandGradient,
+              gradient: AppTheme.downloadGradient,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.brandPrimary.withValues(alpha: 0.4),
+                  color: AppTheme.downloadGreen.withValues(alpha: 0.45),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: const Icon(
-              Icons.play_arrow_rounded,
+              Icons.download_rounded,
               color: Colors.white,
-              size: 24,
+              size: 22,
             ),
           ),
           const SizedBox(width: 12),
@@ -468,14 +468,14 @@ class _TopBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'YT Down',
+                'Vidoory',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
                 ),
               ),
               Text(
-                'Premium video downloader',
+                'Fast video & audio saver',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -531,7 +531,7 @@ class _Hero extends StatelessWidget {
           shaderCallback: (rect) =>
               AppTheme.brandGradient.createShader(rect),
           child: Text(
-            'Save anything\nfrom YouTube.',
+            'Save any video.\nKeep it offline.',
             style: theme.textTheme.displaySmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -578,7 +578,7 @@ class _SearchField extends StatelessWidget {
       onSubmitted: (_) => onSubmit(),
       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
-        hintText: 'youtube.com/watch?v=…',
+        hintText: 'Paste video link here…',
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Container(
@@ -1112,11 +1112,11 @@ class _QualityTile extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        gradient: AppTheme.brandGradient,
+        gradient: AppTheme.downloadGradient,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.brandPrimary.withValues(alpha: 0.35),
+            color: AppTheme.downloadGreen.withValues(alpha: 0.45),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -1182,7 +1182,7 @@ class _DownloadTaskTile extends StatelessWidget {
   String _statusLabel() {
     switch (task.status) {
       case DownloadTaskStatus.completed:
-        return 'Saved · ${task.isVideo ? 'Movies/YTDown' : 'Download/YTDown'}';
+        return 'Saved · ${task.isVideo ? 'Movies/Vidoory' : 'Download/Vidoory'}';
       case DownloadTaskStatus.failed:
         return task.errorMessage ?? 'Download failed';
       case DownloadTaskStatus.cancelled:

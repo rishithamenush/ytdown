@@ -24,7 +24,7 @@ class _DownloadKeepAliveHandler extends TaskHandler {
 class BackgroundDownloadService {
   BackgroundDownloadService._();
 
-  static const _channelId = 'ytdown_downloads';
+  static const _channelId = 'vidoory_downloads';
   static bool _initialized = false;
   static bool _running = false;
 
@@ -36,7 +36,7 @@ class BackgroundDownloadService {
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: _channelId,
         channelName: 'Downloads',
-        channelDescription: 'Shows progress of active YouTube downloads.',
+        channelDescription: 'Shows progress of active downloads.',
         onlyAlertOnce: true,
         showWhen: false,
       ),

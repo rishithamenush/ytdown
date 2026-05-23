@@ -13,7 +13,7 @@ class StorageService {
   static Future<void> ensureInitialized() async {
     if (!Platform.isAndroid || _initialized) return;
     await MediaStore.ensureInitialized();
-    MediaStore.appFolder = 'YTDown';
+    MediaStore.appFolder = 'Vidoory';
     _initialized = true;
   }
 
@@ -40,7 +40,7 @@ class StorageService {
       tempFilePath: tempFile.path,
       dirType: dirType,
       dirName: dirType.defaults,
-      relativePath: 'YTDown',
+      relativePath: 'Vidoory',
     );
 
     if (saveInfo?.uri == null) {
@@ -56,7 +56,7 @@ class StorageService {
     }
 
     final folder = isVideo ? 'Movies' : 'Download';
-    return '$folder/YTDown/${_fileName(tempFile)}';
+    return '$folder/Vidoory/${_fileName(tempFile)}';
   }
 
   static String _fileName(File file) =>

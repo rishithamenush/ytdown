@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color brandPrimary = Color(0xFFFF2A4D);
-  static const Color brandSecondary = Color(0xFFFF7A45);
-  static const Color brandAccent = Color(0xFFB100E8);
+  // Unified green palette — matches launcher icon + splash screen.
+  static const Color brandPrimary = Color(0xFF22C55E);
+  static const Color brandSecondary = Color(0xFF16A34A);
+  static const Color brandAccent = Color(0xFF06B6D4);
+
+  // Aliases retained for the download CTA (same green, distinct semantic name).
+  static const Color downloadGreen = brandPrimary;
+  static const Color downloadGreenDark = brandSecondary;
 
   static const Color darkBg = Color(0xFF07070A);
   static const Color darkSurface = Color(0xFF111116);
@@ -18,6 +23,12 @@ class AppTheme {
 
   static const LinearGradient brandGradient = LinearGradient(
     colors: [brandPrimary, brandSecondary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient downloadGradient = LinearGradient(
+    colors: [downloadGreen, downloadGreenDark],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

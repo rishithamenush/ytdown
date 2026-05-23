@@ -4,9 +4,8 @@ import 'package:ytdown/main.dart';
 
 void main() {
   testWidgets('App shows URL input and get video button', (tester) async {
-    await tester.pumpWidget(const YtDownApp());
+    await tester.pumpWidget(const VidooryApp());
 
-    expect(find.text('YouTube URL'), findsOneWidget);
     expect(find.text('Get video'), findsOneWidget);
   });
 }

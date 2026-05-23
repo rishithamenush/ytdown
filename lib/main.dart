@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'screens/home_screen.dart';
-import 'services/background_download_service.dart';
-import 'services/merge_service.dart';
-import 'services/storage_service.dart';
-import 'theme/app_theme.dart';
+import 'core/theme/app_theme.dart';
+import 'features/downloader/data/services/background_download_service.dart';
+import 'features/downloader/data/services/merge_service.dart';
+import 'features/downloader/data/services/storage_service.dart';
+import 'features/downloader/presentation/pages/home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +26,7 @@ Future<void> main() async {
     await MergeService.ensureInitialized();
     await BackgroundDownloadService.ensureInitialized();
   }
-  runApp(const VidooryApp());
+  runApp(const ProviderScope(child: VidooryApp()));
 }
 
 class VidooryApp extends StatelessWidget {
@@ -40,7 +41,7 @@ class VidooryApp extends StatelessWidget {
         themeMode: ThemeMode.dark,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
-        home: const HomeScreen(),
+        home: const HomePage(),
         builder: (context, child) {
           // Clamp text scaling so very-large accessibility settings don't
           // break the layout (very-small ones also feel broken to users).

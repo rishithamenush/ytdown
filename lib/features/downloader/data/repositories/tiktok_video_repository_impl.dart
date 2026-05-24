@@ -130,9 +130,10 @@ class TiktokVideoRepositoryImpl implements VideoRepository {
       );
 
       cancelToken?.throwIfCancelled();
-      return StorageService.publishDownload(
+      return await StorageService.publishDownload(
         tempFile: file,
         isVideo: !stream.isAudio,
+        isAudio: stream.isAudio,
       );
     } on DioException catch (e) {
       if (CancelToken.isCancel(e) || cancelToken?.isCancelled == true) {
@@ -153,7 +154,10 @@ class TiktokVideoRepositoryImpl implements VideoRepository {
 
 
   static String _safeName(String name) =>
-      name.replaceAll(RegExp(r'[\\/:*?"<>|#]'), '_').trim();
+      name.replaceAll(RegExp(r'[\\/:*?"<>|#]'), '_')
+          .replaceAll(RegExp(r'[^\x20-\x7E]'), '_')
+          .replaceAll(RegExp(r'_+'), '_')
+          .trim();
 
   static String _titleFrom(TiktokVideoData data) {
     final desc = data.title.trim();

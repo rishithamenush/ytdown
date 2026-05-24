@@ -31,4 +31,16 @@ class DownloadTask {
   String? errorMessage;
 
   bool get isActive => status == DownloadTaskStatus.downloading;
+
+  /// User-facing folder hint shown after a successful save.
+  String get savedLocationLabel {
+    final path = savedPath;
+    if (path != null) {
+      if (path.contains('Music')) return 'Music/Vidoory';
+      if (path.contains('Movies')) return 'Movies/Vidoory';
+      if (path.contains('Download')) return 'Download/Vidoory';
+      if (path.contains('Vidoory')) return 'Files · Vidoory';
+    }
+    return isVideo ? 'Movies/Vidoory' : 'Download/Vidoory';
+  }
 }

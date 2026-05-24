@@ -47,7 +47,7 @@ class DownloadTaskTile extends StatelessWidget {
   String _statusLabel() {
     switch (task.status) {
       case DownloadTaskStatus.completed:
-        return 'Saved · ${task.isVideo ? 'Movies/Vidoory' : 'Download/Vidoory'}';
+        return 'Saved · ${task.savedLocationLabel}';
       case DownloadTaskStatus.failed:
         return task.errorMessage ?? 'Download failed';
       case DownloadTaskStatus.cancelled:

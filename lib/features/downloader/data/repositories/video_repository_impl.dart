@@ -195,7 +195,7 @@ class VideoRepositoryImpl implements VideoRepository {
       downloaded = totalBytes;
       report();
 
-      return StorageService.publishDownload(
+      return await StorageService.publishDownload(
         tempFile: mergedFile,
         isVideo: true,
       );
@@ -247,7 +247,11 @@ class VideoRepositoryImpl implements VideoRepository {
           report();
         },
       );
-      return StorageService.publishDownload(tempFile: file, isVideo: isVideo);
+      return await StorageService.publishDownload(
+        tempFile: file,
+        isVideo: isVideo,
+        isAudio: !isVideo,
+      );
     } on DownloadCancelledException {
       rethrow;
     } finally {
@@ -286,7 +290,10 @@ class VideoRepositoryImpl implements VideoRepository {
   // fragment delimiter. YouTube titles rarely contain it, but guarding here
   // matches the TikTok repo and avoids a latent silent-failure mode.
   static String _safeName(String name) =>
-      name.replaceAll(RegExp(r'[\\/:*?"<>|#]'), '_');
+      name.replaceAll(RegExp(r'[\\/:*?"<>|#]'), '_')
+          .replaceAll(RegExp(r'[^\x20-\x7E]'), '_')
+          .replaceAll(RegExp(r'_+'), '_')
+          .trim();
 
   @override
   void dispose() => _remote.dispose();

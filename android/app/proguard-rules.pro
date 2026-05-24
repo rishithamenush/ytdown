@@ -9,3 +9,4 @@
 -keep class com.antonkarpenko.ffmpegkit.AbiDetect {
     native <methods>;
 }
+-keep class com.snnafi.media_store_plus.** { *; }

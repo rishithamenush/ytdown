@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:media_store_plus/media_store_plus.dart';
@@ -9,6 +10,12 @@ class StorageService {
 
   static final MediaStore _mediaStore = MediaStore();
   static bool _initialized = false;
+
+  // MediaStore platform-channel calls have been observed to hang on certain
+  // Android versions when the file's MIME doesn't match the dir's table
+  // (e.g. .webm audio into Audio). A timeout lets us fall back instead of
+  // leaving the UI stuck at 100% forever.
+  static const _mediaStoreCallTimeout = Duration(seconds: 12);
 
   static Future<void> ensureInitialized() async {
     if (!Platform.isAndroid || _initialized) return;
@@ -33,60 +40,95 @@ class StorageService {
 
     await ensureInitialized();
 
-    final dirType = isVideo
+    // media_store_plus derives the saved filename from the temp path and
+    // URI-encodes it on the platform channel. Emoji / non-ASCII names break
+    // that on release builds. For audio we also remap mp4/webm extensions to
+    // ones the Audio table accepts (m4a/weba), otherwise the table's MIME
+    // check rejects video/* and the call hangs or returns null.
+    final fileToSave =
+        await _withMediaStoreSafeName(tempFile, isAudio: isAudio);
+
+    final primary = isVideo
         ? DirType.video
         : (isAudio ? DirType.audio : DirType.download);
+
+    // Try the natural directory first.
+    final saved = await _trySaveInto(fileToSave, primary);
+    if (saved != null) return saved;
+
+    // Audio/video table refused the file (mp4 audio on old devices, exotic
+    // webm container, etc.). Fall back to the Download dir, which has no
+    // MIME-vs-table restriction. The file still lands in Download/Vidoory
+    // and is fully accessible — just not indexed as Music/Movies.
+    if (primary != DirType.download) {
+      final fallback = await _trySaveInto(fileToSave, DirType.download);
+      if (fallback != null) return fallback;
+    }
+
+    throw Exception('Could not save file to device storage');
+  }
+
+  /// Attempts to save [file] into [dirType]. Returns the user-facing path on
+  /// success, or null if MediaStore refused / timed out (caller can fall
+  /// back to a different dir).
+  static Future<String?> _trySaveInto(File file, DirType dirType) async {
     final dirName = dirType.defaults;
+    try {
+      final saveInfo = await _mediaStore
+          .saveFile(
+            tempFilePath: file.path,
+            dirType: dirType,
+            dirName: dirName,
+            relativePath: 'Vidoory',
+          )
+          .timeout(_mediaStoreCallTimeout);
 
-    // media_store_plus derives the saved filename from the temp path and
-    // URI-encodes it on the platform channel. Emoji / non-ASCII names (common
-    // on TikTok) can break that on release builds — copy to a safe name first.
-    final fileToSave = await _withMediaStoreSafeName(tempFile);
+      if (saveInfo?.uri == null) return null;
 
-    final saveInfo = await _mediaStore.saveFile(
-      tempFilePath: fileToSave.path,
-      dirType: dirType,
-      dirName: dirName,
-      relativePath: 'Vidoory',
-    );
+      // Confirm the entry is visible in MediaStore (do not use isFileUriExist —
+      // that only checks SAF document URIs, not content://media/... URIs).
+      final verifiedUri = await _mediaStore
+          .getFileUri(
+            fileName: saveInfo!.name,
+            dirType: dirType,
+            dirName: dirName,
+            relativePath: 'Vidoory',
+          )
+          .timeout(_mediaStoreCallTimeout);
+      if (verifiedUri == null) return null;
 
-    if (saveInfo?.uri == null) {
-      throw Exception('Could not save file to device storage');
+      final filePath = await _mediaStore
+          .getFilePathFromUri(uriString: verifiedUri.toString())
+          .timeout(_mediaStoreCallTimeout);
+      if (filePath != null && filePath.isNotEmpty) return filePath;
+
+      // URI exists but legacy DATA column is empty on newer Android — still
+      // saved. Synthesize a friendly label from the dir type.
+      return '${_topFolderFor(dirType)}/Vidoory/${saveInfo.name}';
+    } on TimeoutException {
+      return null;
+    } catch (_) {
+      return null;
     }
+  }
 
-    // Confirm the entry is visible in MediaStore (do not use isFileUriExist —
-    // that only checks SAF document URIs, not content://media/... URIs).
-    final verifiedUri = await _mediaStore.getFileUri(
-      fileName: saveInfo!.name,
-      dirType: dirType,
-      dirName: dirName,
-      relativePath: 'Vidoory',
-    );
-    if (verifiedUri == null) {
-      throw Exception('Could not save file to device storage');
-    }
-
-    final filePath = await _mediaStore.getFilePathFromUri(
-      uriString: verifiedUri.toString(),
-    );
-    if (filePath != null && filePath.isNotEmpty) {
-      return filePath;
-    }
-
-    // URI exists but legacy DATA column is empty on newer Android — still saved.
-    final folder = isVideo
-        ? 'Movies'
-        : (isAudio ? 'Music' : 'Download');
-    return '$folder/Vidoory/${saveInfo.name}';
+  static String _topFolderFor(DirType dir) {
+    if (dir == DirType.video) return 'Movies';
+    if (dir == DirType.audio) return 'Music';
+    return 'Download';
   }
 
   /// Returns [file] or a same-directory copy with an ASCII-safe filename.
-  static Future<File> _withMediaStoreSafeName(File file) async {
+  static Future<File> _withMediaStoreSafeName(
+    File file, {
+    bool isAudio = false,
+  }) async {
     final originalName = _fileName(file);
     final dot = originalName.lastIndexOf('.');
-    final ext = dot >= 0 ? originalName.substring(dot + 1) : '';
+    var ext = dot >= 0 ? originalName.substring(dot + 1) : '';
     final base = dot >= 0 ? originalName.substring(0, dot) : originalName;
     final safeBase = _mediaStoreSafeName(base);
+    if (isAudio) ext = _audioFriendlyExtension(ext);
     final safeName = ext.isNotEmpty ? '$safeBase.$ext' : safeBase;
 
     if (safeName == originalName) return file;
@@ -94,6 +136,21 @@ class StorageService {
     final safeFile = File('${file.parent.path}/$safeName');
     await file.copy(safeFile.path);
     return safeFile;
+  }
+
+  /// Maps container extensions to ones MediaStore's Audio table accepts.
+  /// YouTube audio-only streams come in an mp4 container (.mp4 → video/mp4),
+  /// which the audio table rejects; .m4a is the same bytes with audio/mp4.
+  static String _audioFriendlyExtension(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'mp4':
+      case 'm4v':
+        return 'm4a';
+      case 'webm':
+        return 'weba';
+      default:
+        return ext;
+    }
   }
 
   /// Strips characters that break MediaStore / URI handling on Android.

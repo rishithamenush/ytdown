@@ -83,26 +83,27 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         children: [
           const Positioned.fill(child: AmbientBackground()),
           SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: TopBar(
-                    activeCount: state.activeTaskCount,
-                    title: 'Library',
-                    subtitle: state.tasks.isEmpty
-                        ? 'Your saved downloads live here'
-                        : '${state.tasks.length} '
-                            '${state.tasks.length == 1 ? 'item' : 'items'}',
-                    onSettingsTap: widget.onSettingsTap,
-                  ),
+            child: Column(
+              children: [
+                TopBar(
+                  activeCount: state.activeTaskCount,
+                  title: 'Library',
+                  subtitle: state.tasks.isEmpty
+                      ? 'Your saved downloads live here'
+                      : '${state.tasks.length} '
+                          '${state.tasks.length == 1 ? 'item' : 'items'}',
+                  onSettingsTap: widget.onSettingsTap,
                 ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
-                  sliver: SliverList.list(
-                    children: [
+                Expanded(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
+                        sliver: SliverList.list(
+                          children: [
                       if (state.tasks.isEmpty)
                         const _EmptyLibrary()
                       else ...[
@@ -133,6 +134,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       ],
                     ],
                   ),
+                ),
+              ],
+            ),
                 ),
               ],
             ),

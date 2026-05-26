@@ -9,7 +9,7 @@ import 'core/theme/app_theme.dart';
 import 'features/downloader/data/services/background_download_service.dart';
 import 'features/downloader/data/services/merge_service.dart';
 import 'features/downloader/data/services/storage_service.dart';
-import 'features/downloader/presentation/pages/root_shell.dart';
+import 'features/downloader/presentation/pages/splash_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +41,7 @@ class VidooryApp extends StatelessWidget {
         themeMode: ThemeMode.dark,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
-        home: const RootShell(),
+        home: const SplashPage(),
         builder: (context, child) {
           // Clamp text scaling so very-large accessibility settings don't
           // break the layout (very-small ones also feel broken to users).

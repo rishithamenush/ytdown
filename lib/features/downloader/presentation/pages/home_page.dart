@@ -8,7 +8,6 @@ import '../providers/home_notifier.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/gradient_button.dart';
-import '../widgets/hero_section.dart';
 import '../widgets/quality_tile.dart';
 import '../widgets/search_field.dart';
 import '../widgets/section_header.dart';
@@ -90,23 +89,23 @@ class _HomePageState extends ConsumerState<HomePage> {
         children: [
           const Positioned.fill(child: AmbientBackground()),
           SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: TopBar(
-                    activeCount: state.activeTaskCount,
-                    onSettingsTap: widget.onSettingsTap,
-                  ),
+            child: Column(
+              children: [
+                TopBar(
+                  activeCount: state.activeTaskCount,
+                  onSettingsTap: widget.onSettingsTap,
                 ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
-                  sliver: SliverList.list(
-                    children: [
-                      const HeroSection(),
-                      const SizedBox(height: 20),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
+                        sliver: SliverList.list(
+                          children: [
+                            const SizedBox(height: 16),
                       SearchField(
                         controller: _urlController,
                         loading: state.loading,
@@ -172,6 +171,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ],
                     ],
                   ),
+                ),
+              ],
+            ),
                 ),
               ],
             ),

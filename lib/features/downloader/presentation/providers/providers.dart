@@ -6,6 +6,7 @@ import '../../data/repositories/composite_video_repository.dart';
 import '../../data/repositories/download_notification_repository_impl.dart';
 import '../../data/repositories/tiktok_video_repository_impl.dart';
 import '../../data/repositories/video_repository_impl.dart';
+import '../../data/services/download_history_service.dart';
 import '../../domain/repositories/download_notification_repository.dart';
 import '../../domain/repositories/video_repository.dart';
 import '../../domain/usecases/download_stream_use_case.dart';
@@ -54,6 +55,10 @@ final videoRepositoryProvider = Provider<VideoRepository>((ref) {
 final downloadNotificationRepositoryProvider =
     Provider<DownloadNotificationRepository>((ref) {
   return const DownloadNotificationRepositoryImpl();
+});
+
+final downloadHistoryServiceProvider = Provider<DownloadHistoryService>((ref) {
+  return DownloadHistoryService();
 });
 
 // ── use cases ───────────────────────────────────────────────────────────────

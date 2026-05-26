@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/services/download_history_service.dart';
 import '../../domain/entities/download_cancel_token.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
@@ -17,6 +18,7 @@ class HomeNotifier extends Notifier<HomeState> {
   late final FetchVideoInfo _fetchVideoInfo;
   late final DownloadStreamUseCase _downloadStream;
   late final DownloadNotificationRepository _notifications;
+  late final DownloadHistoryService _history;
 
   int _taskIdCounter = 0;
   // Throttle foreground-notification updates so we don't spam the OS on
@@ -28,7 +30,23 @@ class HomeNotifier extends Notifier<HomeState> {
     _fetchVideoInfo = ref.read(fetchVideoInfoProvider);
     _downloadStream = ref.read(downloadStreamUseCaseProvider);
     _notifications = ref.read(downloadNotificationRepositoryProvider);
+    _history = ref.read(downloadHistoryServiceProvider);
+    unawaited(_restoreHistory());
     return const HomeState.initial();
+  }
+
+  Future<void> _restoreHistory() async {
+    final restored = await _history.load();
+    if (restored.isEmpty) return;
+    // Keep the in-memory id counter ahead of anything we just loaded so a
+    // new download can't collide with a restored task's id.
+    for (final t in restored) {
+      final asInt = int.tryParse(t.id);
+      if (asInt != null && asInt > _taskIdCounter) _taskIdCounter = asInt;
+    }
+    // Active tasks started before the await won the race — preserve them at
+    // the top and append restored history below.
+    state = state.copyWith(tasks: [...state.tasks, ...restored]);
   }
 
   /// Fetch a video and its downloadable streams. Replaces any previous result.
@@ -95,6 +113,7 @@ class HomeNotifier extends Notifier<HomeState> {
     state = state.copyWith(
       tasks: state.tasks.where((t) => t.id != id).toList(),
     );
+    _persistHistory();
   }
 
   /// Removes every non-active task in one go.
@@ -102,6 +121,7 @@ class HomeNotifier extends Notifier<HomeState> {
     state = state.copyWith(
       tasks: state.tasks.where((t) => t.isActive).toList(),
     );
+    _persistHistory();
   }
 
   /// Look up the task associated with [stream] for the currently-loaded video,
@@ -146,7 +166,14 @@ class HomeNotifier extends Notifier<HomeState> {
       _publishTaskUpdate();
     } finally {
       _syncForegroundNotification(force: true);
+      _persistHistory();
     }
+  }
+
+  void _persistHistory() {
+    // Fire-and-forget: history persistence shouldn't block the UI, and the
+    // service serializes writes internally so out-of-order calls are safe.
+    unawaited(_history.save(state.tasks));
   }
 
   /// Re-emit the same task list to trigger a rebuild after mutating a task in

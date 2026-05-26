@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../widgets/ambient_background.dart';
 import 'root_shell.dart';
 
 /// In-app splash. The native (OS) splash hands off to this once Flutter is
@@ -103,9 +102,14 @@ class _SplashPageState extends State<SplashPage>
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: AppTheme.darkBg,
       body: Stack(
+        // Force the stack to fill the screen — without this, the stack
+        // shrinks to the width of the centered Column (logo + tagline) and
+        // the right portion of the screen renders as raw scaffold black.
+        fit: StackFit.expand,
         children: [
-          const Positioned.fill(child: AmbientBackground()),
+          const Positioned.fill(child: _SplashBackground()),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -176,6 +180,123 @@ class _SplashPageState extends State<SplashPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Full-screen splash background. Unlike the shared AmbientBackground (which
+/// only seeds glows in the top half because content fills the bottom on app
+/// pages), this variant distributes glow blobs across the full height so the
+/// sparse splash layout still feels alive edge-to-edge.
+class _SplashBackground extends StatelessWidget {
+  const _SplashBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF0E1411),
+                  Color(0xFF07090A),
+                  Color(0xFF0B1410),
+                ],
+                stops: [0, 0.55, 1],
+              ),
+            ),
+          ),
+        ),
+        const Positioned(
+          top: -140,
+          left: -100,
+          child: _SplashGlow(
+            color: AppTheme.brandPrimary,
+            size: 360,
+            opacity: 0.34,
+          ),
+        ),
+        const Positioned(
+          top: -60,
+          right: -120,
+          child: _SplashGlow(
+            color: AppTheme.brandAccent,
+            size: 320,
+            opacity: 0.30,
+          ),
+        ),
+        Positioned(
+          left: -90,
+          top: MediaQuery.of(context).size.height * 0.40,
+          child: const _SplashGlow(
+            color: AppTheme.brandSecondary,
+            size: 300,
+            opacity: 0.26,
+          ),
+        ),
+        Positioned(
+          right: -100,
+          top: MediaQuery.of(context).size.height * 0.38,
+          child: const _SplashGlow(
+            color: AppTheme.brandPrimary,
+            size: 300,
+            opacity: 0.26,
+          ),
+        ),
+        const Positioned(
+          bottom: -160,
+          left: -100,
+          child: _SplashGlow(
+            color: AppTheme.brandSecondary,
+            size: 320,
+            opacity: 0.28,
+          ),
+        ),
+        const Positioned(
+          bottom: -120,
+          right: -90,
+          child: _SplashGlow(
+            color: AppTheme.brandPrimary,
+            size: 320,
+            opacity: 0.30,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SplashGlow extends StatelessWidget {
+  const _SplashGlow({
+    required this.color,
+    required this.size,
+    required this.opacity,
+  });
+
+  final Color color;
+  final double size;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color.withValues(alpha: opacity),
+              color.withValues(alpha: 0),
+            ],
+          ),
+        ),
       ),
     );
   }

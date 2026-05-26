@@ -6,6 +6,7 @@ import '../../../../core/theme/responsive.dart';
 import '../../domain/entities/download_task.dart';
 import '../providers/home_notifier.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/confirm_dialog.dart';
 import '../widgets/download_task_tile.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/gradient_button.dart';
@@ -60,6 +61,38 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _clearSearch() {
     _urlController.clear();
     ref.read(homeNotifierProvider.notifier).clearSearch();
+  }
+
+  Future<void> _confirmDismissTask(DownloadTask task) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: 'Remove this download?',
+      message:
+          '"${task.videoTitle}" will be removed from your Downloads list. '
+          'The saved file in your gallery or music library is not affected.',
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      icon: Icons.delete_outline_rounded,
+    );
+    if (!mounted || !confirmed) return;
+    ref.read(homeNotifierProvider.notifier).dismissTask(task.id);
+  }
+
+  Future<void> _confirmClearFinished(int count) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: 'Clear finished downloads?',
+      message: count == 1
+          ? 'The finished entry will be removed from your Downloads list. '
+              'Saved files in your device storage are not affected.'
+          : 'All $count finished entries will be removed from your Downloads '
+              'list. Saved files in your device storage are not affected.',
+      confirmLabel: 'Clear',
+      cancelLabel: 'Cancel',
+      icon: Icons.cleaning_services_rounded,
+    );
+    if (!mounted || !confirmed) return;
+    ref.read(homeNotifierProvider.notifier).clearFinishedTasks();
   }
 
   Future<void> _openTaskFile(DownloadTask task) async {
@@ -128,7 +161,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                           title: 'Downloads',
                           trailingAction: state.hasFinishedTasks
                               ? TextButton(
-                                  onPressed: notifier.clearFinishedTasks,
+                                  onPressed: () => _confirmClearFinished(
+                                    state.tasks
+                                        .where((t) => !t.isActive)
+                                        .length,
+                                  ),
                                   child: const Text('Clear finished'),
                                 )
                               : null,
@@ -140,7 +177,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             child: DownloadTaskTile(
                               task: t,
                               onCancel: () => notifier.cancelTask(t),
-                              onDismiss: () => notifier.dismissTask(t.id),
+                              onDismiss: () => _confirmDismissTask(t),
                               onOpen: () => _openTaskFile(t),
                             ),
                           ),

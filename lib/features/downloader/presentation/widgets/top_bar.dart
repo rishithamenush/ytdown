@@ -5,9 +5,18 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/responsive.dart';
 
 class TopBar extends StatelessWidget {
-  const TopBar({super.key, required this.activeCount});
+  const TopBar({
+    super.key,
+    required this.activeCount,
+    this.title = 'Vidoory',
+    this.subtitle = 'Fast video & audio saver',
+    this.onSettingsTap,
+  });
 
   final int activeCount;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onSettingsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +57,7 @@ class TopBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Vidoory',
+                  title,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.4,
@@ -58,7 +67,7 @@ class TopBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Fast video & audio saver',
+                  subtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
@@ -67,7 +76,7 @@ class TopBar extends StatelessWidget {
               ],
             ),
           ),
-          if (activeCount > 0)
+          if (activeCount > 0) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -97,7 +106,45 @@ class TopBar extends StatelessWidget {
                 ],
               ),
             ),
+            if (onSettingsTap != null) const SizedBox(width: 8),
+          ],
+          if (onSettingsTap != null) _SettingsGear(onTap: onSettingsTap!),
         ],
+      ),
+    );
+  }
+}
+
+class _SettingsGear extends StatelessWidget {
+  const _SettingsGear({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor =
+        isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor),
+          ),
+          child: Icon(
+            Icons.settings_outlined,
+            size: 22,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
       ),
     );
   }

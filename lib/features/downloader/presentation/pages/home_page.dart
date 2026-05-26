@@ -6,8 +6,6 @@ import '../../../../core/theme/responsive.dart';
 import '../../domain/entities/download_task.dart';
 import '../providers/home_notifier.dart';
 import '../widgets/ambient_background.dart';
-import '../widgets/confirm_dialog.dart';
-import '../widgets/download_task_tile.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/hero_section.dart';
@@ -18,7 +16,9 @@ import '../widgets/top_bar.dart';
 import '../widgets/video_preview_card.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.onSettingsTap});
+
+  final VoidCallback? onSettingsTap;
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -63,38 +63,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(homeNotifierProvider.notifier).clearSearch();
   }
 
-  Future<void> _confirmDismissTask(DownloadTask task) async {
-    final confirmed = await showConfirmDialog(
-      context: context,
-      title: 'Remove this download?',
-      message:
-          '"${task.videoTitle}" will be removed from your Downloads list. '
-          'The saved file in your gallery or music library is not affected.',
-      confirmLabel: 'Remove',
-      cancelLabel: 'Cancel',
-      icon: Icons.delete_outline_rounded,
-    );
-    if (!mounted || !confirmed) return;
-    ref.read(homeNotifierProvider.notifier).dismissTask(task.id);
-  }
-
-  Future<void> _confirmClearFinished(int count) async {
-    final confirmed = await showConfirmDialog(
-      context: context,
-      title: 'Clear finished downloads?',
-      message: count == 1
-          ? 'The finished entry will be removed from your Downloads list. '
-              'Saved files in your device storage are not affected.'
-          : 'All $count finished entries will be removed from your Downloads '
-              'list. Saved files in your device storage are not affected.',
-      confirmLabel: 'Clear',
-      cancelLabel: 'Cancel',
-      icon: Icons.cleaning_services_rounded,
-    );
-    if (!mounted || !confirmed) return;
-    ref.read(homeNotifierProvider.notifier).clearFinishedTasks();
-  }
-
   Future<void> _openTaskFile(DownloadTask task) async {
     final messenger = ScaffoldMessenger.of(context);
     final error = await ref
@@ -128,7 +96,10 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               slivers: [
                 SliverToBoxAdapter(
-                  child: TopBar(activeCount: state.activeTaskCount),
+                  child: TopBar(
+                    activeCount: state.activeTaskCount,
+                    onSettingsTap: widget.onSettingsTap,
+                  ),
                 ),
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
@@ -153,35 +124,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                       if (state.error != null) ...[
                         const SizedBox(height: 16),
                         ErrorBanner(message: state.error!),
-                      ],
-                      if (state.tasks.isNotEmpty) ...[
-                        const SizedBox(height: 28),
-                        SectionHeader(
-                          icon: Icons.downloading_rounded,
-                          title: 'Downloads',
-                          trailingAction: state.hasFinishedTasks
-                              ? TextButton(
-                                  onPressed: () => _confirmClearFinished(
-                                    state.tasks
-                                        .where((t) => !t.isActive)
-                                        .length,
-                                  ),
-                                  child: const Text('Clear finished'),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(height: 10),
-                        ...state.tasks.map(
-                          (t) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: DownloadTaskTile(
-                              task: t,
-                              onCancel: () => notifier.cancelTask(t),
-                              onDismiss: () => _confirmDismissTask(t),
-                              onOpen: () => _openTaskFile(t),
-                            ),
-                          ),
-                        ),
                       ],
                       if (state.video != null) ...[
                         const SizedBox(height: 28),
@@ -221,7 +163,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                         }),
                         const SizedBox(height: 12),
                         Text(
-                          'Files save to Movies/Vidoory (video) or Download/Vidoory (audio).',
+                          'Files save to Movies/Vidoory (video) or '
+                          'Download/Vidoory (audio). Track them in the '
+                          'Library tab.',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall,
                         ),

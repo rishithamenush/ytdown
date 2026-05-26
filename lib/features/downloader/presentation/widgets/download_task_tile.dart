@@ -12,11 +12,17 @@ class DownloadTaskTile extends StatelessWidget {
     required this.task,
     required this.onCancel,
     required this.onDismiss,
+    required this.onOpen,
   });
 
   final DownloadTask task;
   final VoidCallback onCancel;
   final VoidCallback onDismiss;
+  final VoidCallback onOpen;
+
+  bool get _canOpen =>
+      task.status == DownloadTaskStatus.completed &&
+      (task.savedPath?.isNotEmpty ?? false);
 
   Color _accent(ThemeData theme) {
     switch (task.status) {
@@ -66,7 +72,10 @@ class DownloadTaskTile extends StatelessWidget {
     final accent = _accent(theme);
 
     return Card(
-      child: Padding(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: _canOpen ? onOpen : null,
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
         child: Column(
           children: [
@@ -121,15 +130,38 @@ class DownloadTaskTile extends StatelessWidget {
               const SizedBox(height: 6),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                _statusLabel(),
-                style: theme.textTheme.bodySmall?.copyWith(color: accent),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _statusLabel(),
+                      style: theme.textTheme.bodySmall?.copyWith(color: accent),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (_canOpen) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.play_circle_outline_rounded,
+                      size: 18,
+                      color: accent,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Tap to preview',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

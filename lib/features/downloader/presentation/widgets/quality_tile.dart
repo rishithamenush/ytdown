@@ -14,12 +14,14 @@ class QualityTile extends StatelessWidget {
     required this.activeTask,
     required this.completedTask,
     required this.onTap,
+    required this.onOpenCompleted,
   });
 
   final DownloadStream stream;
   final DownloadTask? activeTask;
   final DownloadTask? completedTask;
   final VoidCallback? onTap;
+  final VoidCallback onOpenCompleted;
 
   bool get _isAudio => !stream.isVideo;
 
@@ -70,11 +72,12 @@ class QualityTile extends StatelessWidget {
     final downloading = activeTask != null;
     final done = completedTask != null;
     final progress = activeTask?.progress;
+    final canPreview = done && (completedTask!.savedPath?.isNotEmpty ?? false);
 
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
+        onTap: canPreview ? onOpenCompleted : onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
           child: Column(
@@ -191,6 +194,7 @@ class QualityTile extends StatelessWidget {
       );
     }
     if (done) {
+      final canPreview = completedTask!.savedPath?.isNotEmpty ?? false;
       return Container(
         width: 44,
         height: 44,
@@ -198,8 +202,10 @@ class QualityTile extends StatelessWidget {
           color: AppTheme.brandSecondary.withValues(alpha: 0.18),
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Icons.check_rounded,
+        child: Icon(
+          canPreview
+              ? Icons.play_arrow_rounded
+              : Icons.check_rounded,
           color: AppTheme.brandSecondary,
         ),
       );

@@ -62,6 +62,20 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(homeNotifierProvider.notifier).clearSearch();
   }
 
+  Future<void> _openTaskFile(DownloadTask task) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final error = await ref
+        .read(homeNotifierProvider.notifier)
+        .openTaskFile(task);
+    if (!mounted || error == null) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(error),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -127,6 +141,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                               task: t,
                               onCancel: () => notifier.cancelTask(t),
                               onDismiss: () => notifier.dismissTask(t.id),
+                              onOpen: () => _openTaskFile(t),
                             ),
                           ),
                         ),
@@ -159,6 +174,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                               onTap: downloading
                                   ? null
                                   : () => notifier.startDownload(stream),
+                              onOpenCompleted: () {
+                                if (completed != null) {
+                                  _openTaskFile(completed);
+                                }
+                              },
                             ),
                           );
                         }),

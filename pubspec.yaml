@@ -41,6 +41,7 @@ dependencies:
   flutter_riverpod: ^2.5.1
   tiktok_scraper: ^0.1.0
   dio: ^5.9.2
+  open_filex: ^4.5.0
 
 dev_dependencies:
   flutter_test:

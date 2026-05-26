@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/services/download_history_service.dart';
+import '../../data/services/file_preview_service.dart';
 import '../../domain/entities/download_cancel_token.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
@@ -19,6 +20,7 @@ class HomeNotifier extends Notifier<HomeState> {
   late final DownloadStreamUseCase _downloadStream;
   late final DownloadNotificationRepository _notifications;
   late final DownloadHistoryService _history;
+  late final FilePreviewService _filePreview;
 
   int _taskIdCounter = 0;
   // Throttle foreground-notification updates so we don't spam the OS on
@@ -31,6 +33,7 @@ class HomeNotifier extends Notifier<HomeState> {
     _downloadStream = ref.read(downloadStreamUseCaseProvider);
     _notifications = ref.read(downloadNotificationRepositoryProvider);
     _history = ref.read(downloadHistoryServiceProvider);
+    _filePreview = ref.read(filePreviewServiceProvider);
     unawaited(_restoreHistory());
     return const HomeState.initial();
   }
@@ -107,6 +110,19 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   void cancelTask(DownloadTask task) => task.cancelToken.cancel();
+
+  /// Opens a completed task's saved file with the device's default handler.
+  /// Returns null on success, or a user-facing error message on failure.
+  Future<String?> openTaskFile(DownloadTask task) {
+    if (task.status != DownloadTaskStatus.completed) {
+      return Future.value('This download is not finished yet.');
+    }
+    final path = task.savedPath;
+    if (path == null || path.isEmpty) {
+      return Future.value('No saved file is available for this download.');
+    }
+    return _filePreview.open(path);
+  }
 
   /// Removes a finished task from the list (doesn't affect saved files).
   void dismissTask(String id) {

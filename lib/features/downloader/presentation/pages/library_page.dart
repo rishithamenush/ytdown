@@ -15,9 +15,7 @@ import '../widgets/top_bar.dart';
 /// row to preview the saved file; tap the delete icon to remove the entry
 /// (with confirmation).
 class LibraryPage extends ConsumerStatefulWidget {
-  const LibraryPage({super.key, this.onSettingsTap});
-
-  final VoidCallback? onSettingsTap;
+  const LibraryPage({super.key});
 
   @override
   ConsumerState<LibraryPage> createState() => _LibraryPageState();
@@ -92,7 +90,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       ? 'Your saved downloads live here'
                       : '${state.tasks.length} '
                           '${state.tasks.length == 1 ? 'item' : 'items'}',
-                  onSettingsTap: widget.onSettingsTap,
                 ),
                 Expanded(
                   child: CustomScrollView(

@@ -16,10 +16,7 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Settings',
           style: theme.textTheme.titleLarge,

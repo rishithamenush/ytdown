@@ -7,9 +7,7 @@ import 'home_page.dart';
 import 'library_page.dart';
 import 'settings_page.dart';
 
-/// Root navigation shell. Two primary tabs (Home, Library) plus a Settings
-/// page that lives behind a gear icon in each tab's TopBar — per current
-/// mobile-UX guidance, settings is secondary and doesn't earn a tab slot.
+/// Root navigation shell. Three primary tabs: Home, Library, and Settings.
 class RootShell extends ConsumerStatefulWidget {
   const RootShell({super.key});
 
@@ -20,12 +18,6 @@ class RootShell extends ConsumerStatefulWidget {
 class _RootShellState extends ConsumerState<RootShell> {
   int _index = 0;
 
-  void _openSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsPage()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -34,11 +26,12 @@ class _RootShellState extends ConsumerState<RootShell> {
       homeNotifierProvider.select((s) => s.activeTaskCount),
     );
 
-    // IndexedStack keeps both pages alive so search state / scroll position
+    // IndexedStack keeps all pages alive so search state / scroll position
     // survive tab switches.
-    final pages = <Widget>[
-      HomePage(onSettingsTap: _openSettings),
-      LibraryPage(onSettingsTap: _openSettings),
+    const pages = <Widget>[
+      HomePage(),
+      LibraryPage(),
+      SettingsPage(),
     ];
 
     return Scaffold(
@@ -108,6 +101,13 @@ class _GlassBottomBar extends StatelessWidget {
                 selected: index == 1,
                 badgeCount: libraryBadge,
                 onTap: () => onChanged(1),
+              ),
+              _NavItem(
+                icon: Icons.settings_outlined,
+                activeIcon: Icons.settings_rounded,
+                label: 'Settings',
+                selected: index == 2,
+                onTap: () => onChanged(2),
               ),
             ],
           ),

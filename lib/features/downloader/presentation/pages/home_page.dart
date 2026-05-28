@@ -15,9 +15,7 @@ import '../widgets/top_bar.dart';
 import '../widgets/video_preview_card.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key, this.onSettingsTap});
-
-  final VoidCallback? onSettingsTap;
+  const HomePage({super.key});
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -91,10 +89,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           SafeArea(
             child: Column(
               children: [
-                TopBar(
-                  activeCount: state.activeTaskCount,
-                  onSettingsTap: widget.onSettingsTap,
-                ),
+                TopBar(activeCount: state.activeTaskCount),
                 // Pinned input area — paste field, Get video button, and the
                 // related error banner stay above the fold while the video
                 // preview / quality tiles scroll underneath.

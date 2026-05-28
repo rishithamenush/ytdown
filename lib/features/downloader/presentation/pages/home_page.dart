@@ -95,17 +95,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                   activeCount: state.activeTaskCount,
                   onSettingsTap: widget.onSettingsTap,
                 ),
-                Expanded(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
-                        sliver: SliverList.list(
-                          children: [
-                            const SizedBox(height: 16),
+                // Pinned input area — paste field, Get video button, and the
+                // related error banner stay above the fold while the video
+                // preview / quality tiles scroll underneath.
+                Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
                       SearchField(
                         controller: _urlController,
                         loading: state.loading,
@@ -124,56 +121,69 @@ class _HomePageState extends ConsumerState<HomePage> {
                         const SizedBox(height: 16),
                         ErrorBanner(message: state.error!),
                       ],
-                      if (state.video != null) ...[
-                        const SizedBox(height: 28),
-                        VideoPreviewCard(video: state.video!),
-                        const SizedBox(height: 24),
-                        SectionHeader(
-                          icon: Icons.high_quality_rounded,
-                          title: 'Choose quality',
-                          subtitle: state.video!.isTikTok
-                              ? 'TikTok downloads save without watermark when available.'
-                              : 'Tap multiple to download in parallel. HD options merge video + audio.',
-                        ),
-                        const SizedBox(height: 12),
-                        ...state.streams.map((stream) {
-                          final task = notifier.taskForStream(stream);
-                          final downloading = task?.isActive ?? false;
-                          final completed =
-                              task?.status == DownloadTaskStatus.completed
-                                  ? task
-                                  : null;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: QualityTile(
-                              stream: stream,
-                              activeTask: downloading ? task : null,
-                              completedTask: completed,
-                              onTap: downloading
-                                  ? null
-                                  : () => notifier.startDownload(stream),
-                              onOpenCompleted: () {
-                                if (completed != null) {
-                                  _openTaskFile(completed);
-                                }
-                              },
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Files save to Movies/Vidoory (video) or '
-                          'Download/Vidoory (audio). Track them in the '
-                          'Library tab.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
                     ],
                   ),
                 ),
-              ],
-            ),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
+                        sliver: SliverList.list(
+                          children: [
+                            if (state.video != null) ...[
+                              VideoPreviewCard(video: state.video!),
+                              const SizedBox(height: 24),
+                              SectionHeader(
+                                icon: Icons.high_quality_rounded,
+                                title: 'Choose quality',
+                                subtitle: state.video!.isTikTok
+                                    ? 'TikTok downloads save without watermark when available.'
+                                    : 'Tap multiple to download in parallel. HD options merge video + audio.',
+                              ),
+                              const SizedBox(height: 12),
+                              ...state.streams.map((stream) {
+                                final task = notifier.taskForStream(stream);
+                                final downloading = task?.isActive ?? false;
+                                final completed =
+                                    task?.status == DownloadTaskStatus.completed
+                                        ? task
+                                        : null;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: QualityTile(
+                                    stream: stream,
+                                    activeTask: downloading ? task : null,
+                                    completedTask: completed,
+                                    onTap: downloading
+                                        ? null
+                                        : () =>
+                                            notifier.startDownload(stream),
+                                    onOpenCompleted: () {
+                                      if (completed != null) {
+                                        _openTaskFile(completed);
+                                      }
+                                    },
+                                  ),
+                                );
+                              }),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Files save to Movies/Vidoory (video) or '
+                                'Download/Vidoory (audio). Track them in the '
+                                'Library tab.',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

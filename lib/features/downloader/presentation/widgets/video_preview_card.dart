@@ -104,7 +104,11 @@ class VideoPreviewCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    video.isTikTok ? 'TikTok' : 'YouTube',
+                    video.isTikTok
+                        ? 'TikTok'
+                        : video.isFacebook
+                            ? 'Facebook'
+                            : 'YouTube',
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.primary,

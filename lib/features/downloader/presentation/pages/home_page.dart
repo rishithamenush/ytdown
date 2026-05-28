@@ -137,7 +137,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 title: 'Choose quality',
                                 subtitle: state.video!.isTikTok
                                     ? 'TikTok downloads save without watermark when available.'
-                                    : 'Tap multiple to download in parallel. HD options merge video + audio.',
+                                    : state.video!.isFacebook
+                                        ? 'Facebook downloads come in HD or SD. Public videos only.'
+                                        : 'Tap multiple to download in parallel. HD options merge video + audio.',
                               ),
                               const SizedBox(height: 12),
                               ...state.streams.map((stream) {

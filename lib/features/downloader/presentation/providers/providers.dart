@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/datasources/facebook_remote_datasource.dart';
 import '../../data/datasources/tiktok_remote_datasource.dart';
 import '../../data/datasources/youtube_remote_datasource.dart';
 import '../../data/repositories/composite_video_repository.dart';
 import '../../data/repositories/download_notification_repository_impl.dart';
+import '../../data/repositories/facebook_video_repository_impl.dart';
 import '../../data/repositories/tiktok_video_repository_impl.dart';
 import '../../data/repositories/video_repository_impl.dart';
 import '../../data/services/download_history_service.dart';
@@ -31,6 +33,11 @@ final tiktokRemoteDataSourceProvider = Provider<TiktokRemoteDataSource>((ref) {
   return TiktokRemoteDataSource();
 });
 
+final facebookRemoteDataSourceProvider =
+    Provider<FacebookRemoteDataSource>((ref) {
+  return FacebookRemoteDataSource();
+});
+
 // ── domain → repository implementations ─────────────────────────────────────
 
 final youtubeVideoRepositoryProvider = Provider<VideoRepository>((ref) {
@@ -45,10 +52,20 @@ final tiktokVideoRepositoryProvider = Provider<VideoRepository>((ref) {
   return TiktokVideoRepositoryImpl(remote);
 });
 
+final facebookVideoRepositoryProvider = Provider<VideoRepository>((ref) {
+  final remote = ref.watch(facebookRemoteDataSourceProvider);
+  return FacebookVideoRepositoryImpl(remote);
+});
+
 final videoRepositoryProvider = Provider<VideoRepository>((ref) {
   final youtube = ref.watch(youtubeVideoRepositoryProvider);
   final tiktok = ref.watch(tiktokVideoRepositoryProvider);
-  final repo = CompositeVideoRepository(youtube: youtube, tiktok: tiktok);
+  final facebook = ref.watch(facebookVideoRepositoryProvider);
+  final repo = CompositeVideoRepository(
+    youtube: youtube,
+    tiktok: tiktok,
+    facebook: facebook,
+  );
   ref.onDispose(repo.dispose);
   return repo;
 });

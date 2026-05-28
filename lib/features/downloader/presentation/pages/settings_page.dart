@@ -68,7 +68,7 @@ class SettingsPage extends StatelessWidget {
                       icon: Icons.help_outline_rounded,
                       title: 'How to use',
                       subtitle:
-                          'Paste a YouTube or TikTok link on Home, choose a quality, and tap Download.',
+                          'Paste a YouTube, TikTok, or Facebook link on Home, choose a quality, and tap Download.',
                     ),
                   ],
                 ),

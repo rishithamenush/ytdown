@@ -1,5 +1,5 @@
 /// Supported video platforms and URL detection helpers.
-enum VideoSourcePlatform { youtube, tiktok }
+enum VideoSourcePlatform { youtube, tiktok, facebook }
 
 abstract final class VideoLinkParser {
   static VideoSourcePlatform? detect(String input) {
@@ -7,6 +7,7 @@ abstract final class VideoLinkParser {
     if (url.isEmpty) return null;
     if (_isYouTube(url)) return VideoSourcePlatform.youtube;
     if (_isTikTok(url)) return VideoSourcePlatform.tiktok;
+    if (_isFacebook(url)) return VideoSourcePlatform.facebook;
     return null;
   }
 
@@ -22,5 +23,13 @@ abstract final class VideoLinkParser {
         url.contains('vm.tiktok.com/') ||
         url.contains('vt.tiktok.com/') ||
         url.contains('tiktokv.com/');
+  }
+
+  static bool _isFacebook(String url) {
+    return url.contains('facebook.com/') ||
+        url.contains('fb.watch/') ||
+        url.contains('fb.com/') ||
+        url.contains('m.facebook.com/') ||
+        url.contains('web.facebook.com/');
   }
 }

@@ -32,7 +32,7 @@ class SearchField extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        hintText: 'Paste YouTube or TikTok link…',
+        hintText: 'Paste YouTube, TikTok, or Facebook link…',
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Container(

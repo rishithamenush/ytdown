@@ -21,4 +21,5 @@ class VideoInfo {
 
   bool get isTikTok => platform == VideoSourcePlatform.tiktok;
   bool get isYouTube => platform == VideoSourcePlatform.youtube;
+  bool get isFacebook => platform == VideoSourcePlatform.facebook;
 }

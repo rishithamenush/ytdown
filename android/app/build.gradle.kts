@@ -35,9 +35,29 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
+            )
+        }
+    }
+
+    // Per-ABI splitting is handled by Flutter's own `--split-per-abi` flag
+    // (or by `flutter build appbundle`, which Play Store splits automatically).
+    // We don't declare splits.abi here because the Flutter Gradle plugin
+    // always sets ndk.abiFilters on the variant, and the two can't coexist.
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/AL2.0",
+                "META-INF/LGPL2.1",
+                "META-INF/*.kotlin_module",
+                "kotlin/**",
+                "**/*.proto",
+                "DebugProbesKt.bin",
             )
         }
     }

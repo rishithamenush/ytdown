@@ -30,6 +30,11 @@ class VideoPreviewCard extends StatelessWidget {
                     Image.network(
                       video.thumbnailUrl,
                       fit: BoxFit.cover,
+                      // Decode at card-size resolution so low-RAM devices
+                      // don't keep a 1280x720 bitmap in memory per tile.
+                      cacheWidth: 720,
+                      filterQuality: FilterQuality.low,
+                      gaplessPlayback: true,
                       loadingBuilder: (ctx, child, p) {
                         if (p == null) return child;
                         return ColoredBox(

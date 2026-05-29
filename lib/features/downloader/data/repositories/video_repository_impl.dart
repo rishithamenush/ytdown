@@ -173,26 +173,32 @@ class VideoRepositoryImpl implements VideoRepository {
 
     try {
       cancelToken?.throwIfCancelled();
-      await _streamToFile(
-        info: videoStream,
-        file: videoFile,
-        cancelToken: cancelToken,
-        onChunk: (n) {
-          downloaded += n;
-          report();
-        },
-      );
-
-      cancelToken?.throwIfCancelled();
-      await _streamToFile(
-        info: audioStream,
-        file: audioFile,
-        cancelToken: cancelToken,
-        onChunk: (n) {
-          downloaded += n;
-          report();
-        },
-      );
+      // The video-only and audio-only tracks are independent streams on
+      // separate connections, so download them concurrently. The audio track
+      // is small relative to the video, so its transfer now overlaps the
+      // video's instead of being stacked on top — the merge starts as soon as
+      // the (slower) video finishes. Both onChunk callbacks mutate `downloaded`
+      // on the same isolate, so the running total stays correct.
+      await Future.wait([
+        _streamToFile(
+          info: videoStream,
+          file: videoFile,
+          cancelToken: cancelToken,
+          onChunk: (n) {
+            downloaded += n;
+            report();
+          },
+        ),
+        _streamToFile(
+          info: audioStream,
+          file: audioFile,
+          cancelToken: cancelToken,
+          onChunk: (n) {
+            downloaded += n;
+            report();
+          },
+        ),
+      ]);
 
       cancelToken?.throwIfCancelled();
       await MergeService.mergeVideoAndAudio(

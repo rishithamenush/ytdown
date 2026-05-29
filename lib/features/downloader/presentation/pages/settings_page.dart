@@ -93,13 +93,6 @@ class SettingsPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
-                Center(
-                  child: Text(
-                    'Made with Flutter',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
               ],
             ),
           ),

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../../core/utils/video_link_parser.dart';
@@ -11,13 +10,15 @@ import '../../domain/entities/video_info.dart';
 import '../../domain/repositories/video_repository.dart';
 import '../datasources/tiktok_remote_datasource.dart';
 import '../models/tiktok_download_stream.dart';
+import '../services/segmented_download_service.dart';
 import '../services/storage_service.dart';
 
 class TiktokVideoRepositoryImpl implements VideoRepository {
-  TiktokVideoRepositoryImpl(this._remote, {Dio? dio}) : _dio = dio ?? Dio();
+  TiktokVideoRepositoryImpl(this._remote, {SegmentedDownloadService? downloader})
+      : _downloader = downloader ?? SegmentedDownloadService();
 
   final TiktokRemoteDataSource _remote;
-  final Dio _dio;
+  final SegmentedDownloadService _downloader;
 
   @override
   Future<VideoBundle> getVideoBundle(String urlOrId) async {
@@ -100,36 +101,19 @@ class TiktokVideoRepositoryImpl implements VideoRepository {
     final tempDir = await getTemporaryDirectory();
     final safe = _safeName(fileName);
     final file = File('${tempDir.path}/${safe}_$fileSuffix.${stream.extension}');
-    final dioCancel = CancelToken();
 
     try {
-      await _dio.download(
-        stream.directUrl,
-        file.path,
-        cancelToken: dioCancel,
-        options: Options(
-          followRedirects: true,
-          receiveTimeout: const Duration(minutes: 30),
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 '
-                    '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-            'Referer': 'https://www.tiktok.com/',
-          },
-        ),
-        onReceiveProgress: (received, total) {
-          if (cancelToken?.isCancelled ?? false) {
-            dioCancel.cancel('cancelled');
-            throw const DownloadCancelledException();
-          }
-          onProgress?.call(
-            DownloadProgress(
-              fraction: total > 0 ? received / total : 0,
-              downloadedBytes: received,
-              totalBytes: total,
-            ),
-          );
+      await _downloader.download(
+        url: stream.directUrl,
+        output: file,
+        headers: const {
+          'User-Agent':
+              'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 '
+                  '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+          'Referer': 'https://www.tiktok.com/',
         },
+        onProgress: onProgress,
+        cancelToken: cancelToken,
       );
 
       cancelToken?.throwIfCancelled();
@@ -138,11 +122,6 @@ class TiktokVideoRepositoryImpl implements VideoRepository {
         isVideo: !stream.isAudio,
         isAudio: stream.isAudio,
       );
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e) || cancelToken?.isCancelled == true) {
-        throw const DownloadCancelledException();
-      }
-      rethrow;
     } on DownloadCancelledException {
       rethrow;
     } finally {

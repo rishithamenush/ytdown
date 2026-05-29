@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../../core/utils/video_link_parser.dart';
@@ -11,13 +10,17 @@ import '../../domain/entities/video_info.dart';
 import '../../domain/repositories/video_repository.dart';
 import '../datasources/facebook_remote_datasource.dart';
 import '../models/facebook_download_stream.dart';
+import '../services/segmented_download_service.dart';
 import '../services/storage_service.dart';
 
 class FacebookVideoRepositoryImpl implements VideoRepository {
-  FacebookVideoRepositoryImpl(this._remote, {Dio? dio}) : _dio = dio ?? Dio();
+  FacebookVideoRepositoryImpl(
+    this._remote, {
+    SegmentedDownloadService? downloader,
+  }) : _downloader = downloader ?? SegmentedDownloadService();
 
   final FacebookRemoteDataSource _remote;
-  final Dio _dio;
+  final SegmentedDownloadService _downloader;
 
   @override
   Future<VideoBundle> getVideoBundle(String urlOrId) async {
@@ -86,38 +89,21 @@ class FacebookVideoRepositoryImpl implements VideoRepository {
     final safe = _safeName(fileName);
     final file =
         File('${tempDir.path}/${safe}_$fileSuffix.${stream.extension}');
-    final dioCancel = CancelToken();
 
     try {
-      await _dio.download(
-        stream.directUrl,
-        file.path,
-        cancelToken: dioCancel,
-        options: Options(
-          followRedirects: true,
-          receiveTimeout: const Duration(minutes: 30),
-          headers: {
-            // Same desktop UA used by the data source — Facebook's video CDN
-            // sometimes returns a 403 for the default dart-io UA.
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                    '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://www.facebook.com/',
-          },
-        ),
-        onReceiveProgress: (received, total) {
-          if (cancelToken?.isCancelled ?? false) {
-            dioCancel.cancel('cancelled');
-            throw const DownloadCancelledException();
-          }
-          onProgress?.call(
-            DownloadProgress(
-              fraction: total > 0 ? received / total : 0,
-              downloadedBytes: received,
-              totalBytes: total,
-            ),
-          );
+      await _downloader.download(
+        url: stream.directUrl,
+        output: file,
+        headers: const {
+          // Same desktop UA used by the data source — Facebook's video CDN
+          // sometimes returns a 403 for the default dart-io UA.
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                  '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.facebook.com/',
         },
+        onProgress: onProgress,
+        cancelToken: cancelToken,
       );
 
       cancelToken?.throwIfCancelled();
@@ -126,11 +112,6 @@ class FacebookVideoRepositoryImpl implements VideoRepository {
         isVideo: !stream.isAudio,
         isAudio: stream.isAudio,
       );
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e) || cancelToken?.isCancelled == true) {
-        throw const DownloadCancelledException();
-      }
-      rethrow;
     } on DownloadCancelledException {
       rethrow;
     } finally {

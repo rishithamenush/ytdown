@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ytdown/core/utils/video_link_parser.dart';
+import 'package:vidoory/core/utils/video_link_parser.dart';
 
 void main() {
   group('VideoLinkParser.detect', () {

@@ -1,4 +1,4 @@
-package com.example.ytdown
+package com.vidoory.app
 
 import io.flutter.embedding.android.FlutterActivity
 

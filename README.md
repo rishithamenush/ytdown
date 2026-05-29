@@ -1,6 +1,6 @@
-# ytdown
+# Vidoory
 
-A new Flutter project.
+Fast video & audio saver built with Flutter.
 
 ## Getting Started
 

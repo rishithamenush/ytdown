@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
+import 'app_selection_checkbox.dart';
 
 class DownloadTaskTile extends StatelessWidget {
   const DownloadTaskTile({
@@ -13,12 +14,20 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onCancel,
     required this.onDismiss,
     required this.onOpen,
+    this.selectionMode = false,
+    this.selected = false,
+    this.onSelectionToggle,
+    this.onLongPress,
   });
 
   final DownloadTask task;
   final VoidCallback onCancel;
   final VoidCallback onDismiss;
   final VoidCallback onOpen;
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback? onSelectionToggle;
+  final VoidCallback? onLongPress;
 
   bool get _canOpen =>
       task.status == DownloadTaskStatus.completed &&
@@ -74,7 +83,10 @@ class DownloadTaskTile extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: _canOpen ? onOpen : null,
+        onTap: selectionMode
+            ? onSelectionToggle
+            : (_canOpen ? onOpen : null),
+        onLongPress: selectionMode ? null : onLongPress,
         child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
         child: Column(
@@ -82,7 +94,20 @@ class DownloadTaskTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _leading(accent, progress),
+                if (selectionMode)
+                  SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: Center(
+                      child: AppSelectionCheckbox(
+                        selected: selected,
+                        onChanged: (_) => onSelectionToggle?.call(),
+                        size: 28,
+                      ),
+                    ),
+                  )
+                else
+                  _leading(accent, progress),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -104,16 +129,17 @@ class DownloadTaskTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    task.isActive
-                        ? Icons.close_rounded
-                        : Icons.delete_outline_rounded,
-                    size: 20,
+                if (!selectionMode)
+                  IconButton(
+                    icon: Icon(
+                      task.isActive
+                          ? Icons.close_rounded
+                          : Icons.delete_outline_rounded,
+                      size: 20,
+                    ),
+                    tooltip: task.isActive ? 'Cancel' : 'Dismiss',
+                    onPressed: task.isActive ? onCancel : onDismiss,
                   ),
-                  tooltip: task.isActive ? 'Cancel' : 'Dismiss',
-                  onPressed: task.isActive ? onCancel : onDismiss,
-                ),
               ],
             ),
             if (task.isActive) ...[
@@ -140,7 +166,7 @@ class DownloadTaskTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (_canOpen) ...[
+                  if (_canOpen && !selectionMode) ...[
                     const SizedBox(width: 8),
                     Icon(
                       Icons.play_circle_outline_rounded,

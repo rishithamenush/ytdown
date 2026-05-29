@@ -112,11 +112,20 @@ class HomeNotifier extends Notifier<HomeState> {
     return _filePreview.open(path);
   }
 
-  void dismissTask(String id) {
+  void dismissTask(String id) => dismissTasks({id});
+
+  void dismissTasks(Set<String> ids) {
+    if (ids.isEmpty) return;
     state = state.copyWith(
-      tasks: state.tasks.where((t) => t.id != id).toList(),
+      tasks: state.tasks.where((t) => !ids.contains(t.id)).toList(),
     );
     _persistHistory();
+  }
+
+  void cancelTasks(Iterable<DownloadTask> tasks) {
+    for (final task in tasks) {
+      if (task.isActive) task.cancelToken.cancel();
+    }
   }
 
   void clearFinishedTasks() {

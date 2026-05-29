@@ -1,13 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/datasources/direct_link_remote_datasource.dart';
 import '../../data/datasources/facebook_remote_datasource.dart';
 import '../../data/datasources/tiktok_remote_datasource.dart';
 import '../../data/datasources/youtube_remote_datasource.dart';
 import '../../data/repositories/composite_video_repository.dart';
+import '../../data/repositories/direct_link_video_repository_impl.dart';
 import '../../data/repositories/download_notification_repository_impl.dart';
 import '../../data/repositories/facebook_video_repository_impl.dart';
 import '../../data/repositories/tiktok_video_repository_impl.dart';
 import '../../data/repositories/video_repository_impl.dart';
+import '../../data/services/direct_link_cookie_store.dart';
 import '../../data/services/download_history_service.dart';
 import '../../data/services/file_preview_service.dart';
 import '../../domain/repositories/download_notification_repository.dart';
@@ -38,6 +41,15 @@ final facebookRemoteDataSourceProvider =
   return FacebookRemoteDataSource();
 });
 
+final directLinkRemoteDataSourceProvider =
+    Provider<DirectLinkRemoteDataSource>((ref) {
+  return DirectLinkRemoteDataSource();
+});
+
+final directLinkCookieStoreProvider = Provider<DirectLinkCookieStore>((ref) {
+  return DirectLinkCookieStore();
+});
+
 // ── domain → repository implementations ─────────────────────────────────────
 
 final youtubeVideoRepositoryProvider = Provider<VideoRepository>((ref) {
@@ -57,14 +69,22 @@ final facebookVideoRepositoryProvider = Provider<VideoRepository>((ref) {
   return FacebookVideoRepositoryImpl(remote);
 });
 
+final directLinkVideoRepositoryProvider = Provider<VideoRepository>((ref) {
+  final remote = ref.watch(directLinkRemoteDataSourceProvider);
+  final cookies = ref.watch(directLinkCookieStoreProvider);
+  return DirectLinkVideoRepositoryImpl(remote, cookies);
+});
+
 final videoRepositoryProvider = Provider<VideoRepository>((ref) {
   final youtube = ref.watch(youtubeVideoRepositoryProvider);
   final tiktok = ref.watch(tiktokVideoRepositoryProvider);
   final facebook = ref.watch(facebookVideoRepositoryProvider);
+  final directLink = ref.watch(directLinkVideoRepositoryProvider);
   final repo = CompositeVideoRepository(
     youtube: youtube,
     tiktok: tiktok,
     facebook: facebook,
+    directLink: directLink,
   );
   ref.onDispose(repo.dispose);
   return repo;

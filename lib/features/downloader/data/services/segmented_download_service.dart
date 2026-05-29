@@ -39,6 +39,12 @@ class SegmentedDownloadService {
   /// flood the UI with rebuilds. The terminal 100% report is always emitted.
   static const _progressInterval = Duration(milliseconds: 100);
 
+  // Force uncompressed transfer. With Content-Encoding compression on, a byte
+  // range is a slice of the *compressed* stream — the pieces can't be stitched
+  // back into the original file, and the client may even try to gunzip each
+  // slice independently. `identity` guarantees ranges map to real file bytes.
+  static const _noCompression = {'Accept-Encoding': 'identity'};
+
   Future<void> download({
     required String url,
     required File output,
@@ -47,32 +53,72 @@ class SegmentedDownloadService {
     DownloadCancelToken? cancelToken,
   }) async {
     cancelToken?.throwIfCancelled();
-    final probe = await _probe(url, headers);
+    try {
+      final probe = await _probe(url, headers);
 
-    final canSegment = probe.supportsRanges &&
-        probe.totalBytes >= minSegmentBytes &&
-        maxConnections > 1;
+      final canSegment = probe.supportsRanges &&
+          probe.totalBytes >= minSegmentBytes &&
+          maxConnections > 1;
 
-    if (!canSegment) {
-      await _downloadSingle(
+      if (!canSegment) {
+        await _downloadSingle(
+          url: url,
+          output: output,
+          headers: headers,
+          knownTotal: probe.totalBytes,
+          onProgress: onProgress,
+          cancelToken: cancelToken,
+        );
+        return;
+      }
+
+      await _downloadSegmented(
         url: url,
         output: output,
+        total: probe.totalBytes,
         headers: headers,
-        knownTotal: probe.totalBytes,
         onProgress: onProgress,
         cancelToken: cancelToken,
       );
-      return;
+    } on DioException catch (e) {
+      // Translate transport-level failures into a single user-facing message.
+      // Cancellation throws DownloadCancelledException (not a DioException),
+      // so it passes through untouched.
+      throw _mapDioError(e);
     }
+  }
 
-    await _downloadSegmented(
-      url: url,
-      output: output,
-      total: probe.totalBytes,
-      headers: headers,
-      onProgress: onProgress,
-      cancelToken: cancelToken,
-    );
+  Exception _mapDioError(DioException e) {
+    final code = e.response?.statusCode;
+    if (code == 401 || code == 403) {
+      return const DownloadException(
+        'The host blocked this download (403). The file may be protected by '
+        'Cloudflare or require a browser/login — open the link in a browser '
+        'instead.',
+      );
+    }
+    if (code == 404 || code == 410) {
+      return const DownloadException(
+        'File not found — the link may have expired or been removed.',
+      );
+    }
+    if (code != null && code >= 400) {
+      return DownloadException('Download failed (HTTP $code).');
+    }
+    return switch (e.type) {
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.receiveTimeout ||
+      DioExceptionType.sendTimeout =>
+        const DownloadException(
+          'The download timed out. Check your connection and try again.',
+        ),
+      DioExceptionType.connectionError => const DownloadException(
+          'Network error — check your connection and try again.',
+        ),
+      _ => const DownloadException(
+          'Download failed. The link may be invalid or unreachable.',
+        ),
+    };
   }
 
   // ── segmented path ─────────────────────────────────────────────────────────
@@ -155,8 +201,10 @@ class SegmentedDownloadService {
         responseType: ResponseType.stream,
         followRedirects: true,
         receiveTimeout: const Duration(minutes: 30),
-        headers: {...headers, 'Range': 'bytes=$start-$end'},
-        validateStatus: (s) => s != null && s < 500,
+        headers: {...headers, ..._noCompression, 'Range': 'bytes=$start-$end'},
+        // A healthy range reply is 206 (or 200). Treat 4xx/5xx as a failure so
+        // we surface an error instead of writing an error page into the part.
+        validateStatus: (s) => s != null && s < 400,
       ),
       cancelToken: dioCancel,
     );
@@ -217,7 +265,7 @@ class SegmentedDownloadService {
       options: Options(
         followRedirects: true,
         receiveTimeout: const Duration(minutes: 30),
-        headers: headers,
+        headers: {...headers, ..._noCompression},
       ),
       onReceiveProgress: (rec, totalFromServer) {
         if (cancelToken?.isCancelled ?? false) {
@@ -246,7 +294,7 @@ class SegmentedDownloadService {
         options: Options(
           responseType: ResponseType.bytes,
           followRedirects: true,
-          headers: {...headers, 'Range': 'bytes=0-0'},
+          headers: {...headers, ..._noCompression, 'Range': 'bytes=0-0'},
           validateStatus: (s) => s != null && s < 500,
         ),
       );
@@ -292,6 +340,17 @@ class SegmentedDownloadService {
     }
     return segments;
   }
+}
+
+/// A download failure with a message that's safe to show the user directly
+/// (the notifier surfaces `toString()` as the task's error text).
+class DownloadException implements Exception {
+  const DownloadException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 class _Probe {

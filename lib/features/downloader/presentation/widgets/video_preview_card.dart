@@ -27,28 +27,40 @@ class VideoPreviewCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      video.thumbnailUrl,
-                      fit: BoxFit.cover,
-                      // Decode at card-size resolution so low-RAM devices
-                      // don't keep a 1280x720 bitmap in memory per tile.
-                      cacheWidth: 720,
-                      filterQuality: FilterQuality.low,
-                      gaplessPlayback: true,
-                      loadingBuilder: (ctx, child, p) {
-                        if (p == null) return child;
-                        return ColoredBox(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      },
-                      errorBuilder: (_, __, ___) => ColoredBox(
+                    // Direct-link files have no thumbnail — show a file glyph
+                    // instead of a (guaranteed-to-fail) network image.
+                    if (video.thumbnailUrl.isEmpty)
+                      ColoredBox(
                         color: theme.colorScheme.surfaceContainerHighest,
-                        child: const Icon(Icons.broken_image_outlined),
+                        child: Icon(
+                          Icons.insert_drive_file_rounded,
+                          size: 56,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    else
+                      Image.network(
+                        video.thumbnailUrl,
+                        fit: BoxFit.cover,
+                        // Decode at card-size resolution so low-RAM devices
+                        // don't keep a 1280x720 bitmap in memory per tile.
+                        cacheWidth: 720,
+                        filterQuality: FilterQuality.low,
+                        gaplessPlayback: true,
+                        loadingBuilder: (ctx, child, p) {
+                          if (p == null) return child;
+                          return ColoredBox(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Icon(Icons.broken_image_outlined),
+                        ),
                       ),
-                    ),
                     const DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -113,7 +125,9 @@ class VideoPreviewCard extends StatelessWidget {
                         ? 'TikTok'
                         : video.isFacebook
                             ? 'Facebook'
-                            : 'YouTube',
+                            : video.isDirectLink
+                                ? 'Direct link'
+                                : 'YouTube',
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.primary,

@@ -13,11 +13,14 @@ class FetchVideoInfo {
   Future<FetchVideoResult> call(String urlOrId) async {
     final trimmed = urlOrId.trim();
     if (trimmed.isEmpty) {
-      throw ArgumentError('Paste a YouTube, TikTok, or Facebook video link');
+      throw ArgumentError(
+        'Paste a video link or a direct file URL to download',
+      );
     }
     if (VideoLinkParser.detect(trimmed) == null) {
       throw ArgumentError(
-        'Unsupported link. Paste a YouTube, TikTok, or Facebook URL.',
+        'Unsupported link. Paste a YouTube, TikTok, or Facebook URL, '
+        'or a direct file link.',
       );
     }
     final bundle = await _repository.getVideoBundle(trimmed);

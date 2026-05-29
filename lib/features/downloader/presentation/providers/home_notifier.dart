@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/user_facing_error.dart';
 import '../../data/services/download_history_service.dart';
 import '../../data/services/file_preview_service.dart';
 import '../../domain/entities/download_cancel_token.dart';
@@ -67,7 +68,7 @@ class HomeNotifier extends Notifier<HomeState> {
         loading: false,
         clearVideo: true,
         streams: [],
-        error: e.toString(),
+        error: userFacingError(e),
       );
     }
   }

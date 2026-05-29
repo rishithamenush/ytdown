@@ -3,23 +3,27 @@ import '../../domain/entities/download_cancel_token.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
 import '../../domain/repositories/video_repository.dart';
+import '../models/direct_link_download_stream.dart';
 import '../models/facebook_download_stream.dart';
 import '../models/tiktok_download_stream.dart';
 
-/// Routes fetch/download calls to the YouTube, TikTok, or Facebook repository
-/// based on the pasted URL.
+/// Routes fetch/download calls to the YouTube, TikTok, Facebook, or direct-link
+/// repository based on the pasted URL.
 class CompositeVideoRepository implements VideoRepository {
   CompositeVideoRepository({
     required VideoRepository youtube,
     required VideoRepository tiktok,
     required VideoRepository facebook,
+    required VideoRepository directLink,
   })  : _youtube = youtube,
         _tiktok = tiktok,
-        _facebook = facebook;
+        _facebook = facebook,
+        _directLink = directLink;
 
   final VideoRepository _youtube;
   final VideoRepository _tiktok;
   final VideoRepository _facebook;
+  final VideoRepository _directLink;
 
   VideoRepository _for(String urlOrId) {
     final platform = VideoLinkParser.detect(urlOrId);
@@ -27,8 +31,10 @@ class CompositeVideoRepository implements VideoRepository {
       VideoSourcePlatform.tiktok => _tiktok,
       VideoSourcePlatform.youtube => _youtube,
       VideoSourcePlatform.facebook => _facebook,
+      VideoSourcePlatform.directLink => _directLink,
       null => throw ArgumentError(
-          'Unsupported link. Paste a YouTube, TikTok, or Facebook video URL.',
+          'Unsupported link. Paste a YouTube, TikTok, or Facebook video URL, '
+          'or a direct file link.',
         ),
     };
   }
@@ -48,6 +54,7 @@ class CompositeVideoRepository implements VideoRepository {
     final repo = switch (stream) {
       TiktokDownloadStream _ => _tiktok,
       FacebookDownloadStream _ => _facebook,
+      DirectLinkDownloadStream _ => _directLink,
       _ => _youtube,
     };
     return repo.downloadStream(
@@ -64,5 +71,6 @@ class CompositeVideoRepository implements VideoRepository {
     _youtube.dispose();
     _tiktok.dispose();
     _facebook.dispose();
+    _directLink.dispose();
   }
 }

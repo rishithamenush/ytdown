@@ -3,8 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/responsive.dart';
+import '../../../../core/utils/video_link_parser.dart';
+import '../../data/models/direct_link_download_stream.dart';
+import '../../domain/entities/download_stream.dart';
 import '../../domain/entities/download_task.dart';
 import '../providers/home_notifier.dart';
+import '../providers/providers.dart';
+import '../widgets/direct_link_browser_sheet.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/gradient_button.dart';
@@ -40,9 +45,64 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Future<void> _fetch() async {
     FocusScope.of(context).unfocus();
-    await ref.read(homeNotifierProvider.notifier).fetchVideo(
-          _urlController.text,
-        );
+    final notifier = ref.read(homeNotifierProvider.notifier);
+    await notifier.fetchVideo(_urlController.text);
+    if (!mounted) return;
+
+    final state = ref.read(homeNotifierProvider);
+    if (state.error != null) return;
+
+    for (final stream in state.streams) {
+      if (stream is DirectLinkDownloadStream &&
+          stream.requiresBrowserSession) {
+        final verified = await _ensureBrowserSession(stream.directUrl);
+        if (!mounted || !verified) return;
+        await notifier.fetchVideo(_urlController.text);
+        return;
+      }
+    }
+  }
+
+  /// Opens an in-app browser so Cloudflare-protected hosts can set cookies.
+  Future<bool> _ensureBrowserSession(String fileUrl) async {
+    final host = Uri.tryParse(fileUrl)?.host ?? '';
+    if (host.isEmpty) return false;
+
+    final store = ref.read(directLinkCookieStoreProvider);
+    if (store.hasSession(host)) return true;
+
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DirectLinkBrowserSheet(
+        fileUrl: fileUrl,
+        cookieStore: store,
+      ),
+    );
+    return ok == true;
+  }
+
+  Future<void> _startDownload(DownloadStream stream) async {
+    if (stream is DirectLinkDownloadStream) {
+      final host = Uri.tryParse(stream.directUrl)?.host ?? '';
+      final store = ref.read(directLinkCookieStoreProvider);
+      if (stream.requiresBrowserSession && !store.hasSession(host)) {
+        final verified = await _ensureBrowserSession(stream.directUrl);
+        if (!mounted || !verified) return;
+        await ref.read(homeNotifierProvider.notifier).fetchVideo(
+              _urlController.text,
+            );
+        if (!mounted) return;
+        final updated = ref.read(homeNotifierProvider).streams;
+        final match = updated.whereType<DirectLinkDownloadStream>().firstOrNull;
+        if (match != null) {
+          stream = match;
+        }
+      }
+    }
+    if (!mounted) return;
+    await ref.read(homeNotifierProvider.notifier).startDownload(stream);
   }
 
   Future<void> _paste() async {
@@ -53,6 +113,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     _urlController.selection = TextSelection.fromPosition(
       TextPosition(offset: text.length),
     );
+    // Auto-fetch when the clipboard holds a supported link (YouTube, TikTok,
+    // Facebook, or a direct file URL such as an .mp4).
+    if (VideoLinkParser.detect(text) != null) {
+      await _fetch();
+    }
   }
 
   void _clearSearch() {
@@ -80,6 +145,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     final state = ref.watch(homeNotifierProvider);
     final notifier = ref.read(homeNotifierProvider.notifier);
     final hPad = Responsive.horizontalPadding(context);
+    final pastedUrl = _urlController.text.trim();
+    final isDirectFile =
+        VideoLinkParser.detect(pastedUrl) == VideoSourcePlatform.directLink;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -109,7 +177,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                       GradientButton(
                         onPressed: state.loading ? null : _fetch,
                         loading: state.loading,
-                        label: state.loading ? 'Fetching video…' : 'Get video',
+                        label: state.loading
+                            ? (isDirectFile || state.video?.isDirectLink == true
+                                ? 'Checking file…'
+                                : 'Fetching video…')
+                            : (isDirectFile || state.video?.isDirectLink == true
+                                ? 'Get file'
+                                : 'Get video'),
                         icon: Icons.search_rounded,
                       ),
                       if (state.error != null) ...[
@@ -134,12 +208,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                               const SizedBox(height: 24),
                               SectionHeader(
                                 icon: Icons.high_quality_rounded,
-                                title: 'Choose quality',
+                                title: state.video!.isDirectLink
+                                    ? 'Ready to download'
+                                    : 'Choose quality',
                                 subtitle: state.video!.isTikTok
                                     ? 'TikTok downloads save without watermark when available.'
                                     : state.video!.isFacebook
                                         ? 'Facebook downloads come in HD or SD. Public videos only.'
-                                        : 'Tap multiple to download in parallel. HD options merge video + audio.',
+                                        : state.video!.isDirectLink
+                                            ? (state.streams.any(
+                                                (s) =>
+                                                    s is DirectLinkDownloadStream &&
+                                                    s.requiresBrowserSession,
+                                              )
+                                                ? 'This host uses browser protection — verify once, then download.'
+                                                : 'Downloaded over multiple connections for max speed.')
+                                            : 'Tap multiple to download in parallel. HD options merge video + audio.',
                               ),
                               const SizedBox(height: 12),
                               ...state.streams.map((stream) {
@@ -157,8 +241,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     completedTask: completed,
                                     onTap: downloading
                                         ? null
-                                        : () =>
-                                            notifier.startDownload(stream),
+                                        : () => _startDownload(stream),
                                     onOpenCompleted: () {
                                       if (completed != null) {
                                         _openTaskFile(completed);

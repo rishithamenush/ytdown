@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../data/models/direct_link_download_stream.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
 import '../../domain/entities/download_task.dart';
@@ -25,7 +26,12 @@ class QualityTile extends StatelessWidget {
 
   bool get _isAudio => !stream.isVideo;
 
+  // A direct file has no resolution to report — the repository signals this by
+  // returning a "video" stream with a null height (see DirectLinkDownloadStream).
+  bool get _isFile => stream.isVideo && stream.videoHeight == null;
+
   String get _badge {
+    if (_isFile) return 'FILE';
     if (_isAudio) return 'AUDIO';
     final h = stream.videoHeight;
     if (h == null) return 'SD';
@@ -36,10 +42,13 @@ class QualityTile extends StatelessWidget {
     return 'SD';
   }
 
-  IconData get _icon =>
-      _isAudio ? Icons.graphic_eq_rounded : Icons.movie_filter_rounded;
+  IconData get _icon {
+    if (_isFile) return Icons.insert_drive_file_rounded;
+    return _isAudio ? Icons.graphic_eq_rounded : Icons.movie_filter_rounded;
+  }
 
   Color _badgeColor() {
+    if (_isFile) return AppTheme.brandPrimary;
     if (_isAudio) return AppTheme.brandAccent;
     final h = stream.videoHeight ?? 0;
     if (h >= 2160) return const Color(0xFFFFB020);
@@ -48,6 +57,7 @@ class QualityTile extends StatelessWidget {
   }
 
   String _title() {
+    if (_isFile) return stream.label;
     if (_isAudio) return 'Audio only';
     final h = stream.videoHeight;
     if (h == null) return stream.label;
@@ -57,6 +67,14 @@ class QualityTile extends StatelessWidget {
   String _subtitle() {
     final size = Formatters.bytes(stream.estimatedSizeBytes);
     final ext = stream.extension;
+    if (_isFile) {
+      final direct = stream;
+      if (direct is DirectLinkDownloadStream &&
+          direct.requiresBrowserSession) {
+        return 'Protected host · tap to verify & download · .$ext';
+      }
+      return 'Direct download · .$ext · ≈$size';
+    }
     if (stream.isMerged) {
       return 'Video + audio merge · .$ext · ≈$size';
     }

@@ -115,6 +115,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  void _cancelFetch() {
+    ref.read(homeNotifierProvider.notifier).cancelFetch();
+  }
+
   void _clearSearch() {
     _urlController.clear();
     ref.read(homeNotifierProvider.notifier).clearSearch();
@@ -177,6 +181,40 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 ? 'Get file'
                                 : 'Get video'),
                         icon: Icons.search_rounded,
+                      ),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        child: state.loading
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: SizedBox(
+                                  height: Responsive.scale(context, 38),
+                                  child: TextButton(
+                                    onPressed: _cancelFetch,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: theme.colorScheme.onSurfaceVariant,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: theme.colorScheme.outline
+                                              .withValues(alpha: 0.35),
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Cancel',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
                       ),
                       if (state.error != null) ...[
                         const SizedBox(height: 16),

@@ -23,6 +23,7 @@ class HomeNotifier extends Notifier<HomeState> {
   late final FilePreviewService _filePreview;
 
   int _taskIdCounter = 0;
+  int _fetchSequence = 0;
   DateTime _lastNotificationUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
@@ -47,15 +48,18 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   Future<void> fetchVideo(String urlOrId) async {
+    final seq = ++_fetchSequence;
     state = state.copyWith(loading: true, clearError: true);
     try {
       final result = await _fetchVideoInfo(urlOrId);
+      if (seq != _fetchSequence) return;
       state = state.copyWith(
         video: result.info,
         streams: result.streams,
         loading: false,
       );
     } catch (e) {
+      if (seq != _fetchSequence) return;
       state = state.copyWith(
         loading: false,
         clearVideo: true,
@@ -63,6 +67,11 @@ class HomeNotifier extends Notifier<HomeState> {
         error: userFacingError(e),
       );
     }
+  }
+
+  void cancelFetch() {
+    ++_fetchSequence;
+    state = state.copyWith(loading: false, clearVideo: true, streams: [], clearError: true);
   }
 
   void clearSearch() {

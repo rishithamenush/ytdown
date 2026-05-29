@@ -30,9 +30,9 @@ class FacebookRemoteDataSource {
 
   final Dio _dio;
 
-  // The use case calls `getVideo` twice in quick succession (once for info,
-  // once for streams). Gateways are slow — cache the last result by URL so
-  // the second call is free. Overwritten on every fresh fetch.
+  // Gateways are slow, so cache the last successful result by URL. Re-pasting
+  // (or retrying) the same link returns instantly instead of re-scraping.
+  // Overwritten on every fresh fetch.
   String? _cachedUrl;
   FacebookVideoData? _cachedData;
 

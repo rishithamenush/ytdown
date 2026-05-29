@@ -23,21 +23,29 @@ class VideoRepositoryImpl implements VideoRepository {
   final YoutubeRemoteDataSource _remote;
 
   @override
-  Future<VideoInfo> getVideoInfo(String urlOrId) async {
-    final video = await _remote.getVideo(urlOrId);
-    return VideoInfo(
-      id: video.id.value,
-      title: video.title,
-      author: video.author,
-      thumbnailUrl: video.thumbnails.highResUrl,
-      duration: video.duration,
-      platform: VideoSourcePlatform.youtube,
+  Future<VideoBundle> getVideoBundle(String urlOrId) async {
+    // Metadata (videos.get) and the stream manifest come from two independent
+    // YouTube requests, so fire them together rather than one-after-another —
+    // the bundle is ready as soon as the slower of the two returns.
+    final (video, manifest) = await (
+      _remote.getVideo(urlOrId),
+      _remote.getManifest(urlOrId),
+    ).wait;
+
+    return VideoBundle(
+      info: VideoInfo(
+        id: video.id.value,
+        title: video.title,
+        author: video.author,
+        thumbnailUrl: video.thumbnails.highResUrl,
+        duration: video.duration,
+        platform: VideoSourcePlatform.youtube,
+      ),
+      streams: _streamsFromManifest(manifest),
     );
   }
 
-  @override
-  Future<List<DownloadStream>> getDownloadStreams(String urlOrId) async {
-    final manifest = await _remote.getManifest(urlOrId);
+  List<DownloadStream> _streamsFromManifest(StreamManifest manifest) {
     final options = <YoutubeDownloadStream>[];
 
     final bestAudio = manifest.audioOnly.isNotEmpty

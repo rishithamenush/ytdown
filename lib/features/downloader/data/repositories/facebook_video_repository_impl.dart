@@ -20,20 +20,23 @@ class FacebookVideoRepositoryImpl implements VideoRepository {
   final Dio _dio;
 
   @override
-  Future<VideoInfo> getVideoInfo(String urlOrId) async {
+  Future<VideoBundle> getVideoBundle(String urlOrId) async {
+    // A single (slow) gateway scrape produces both the metadata and the CDN
+    // URLs, so fetch once and build both from the same result.
     final data = await _remote.getVideo(urlOrId);
-    return VideoInfo(
-      id: data.id,
-      title: _trimTitle(data.title),
-      author: data.author,
-      thumbnailUrl: data.thumbnailUrl,
-      platform: VideoSourcePlatform.facebook,
+    return VideoBundle(
+      info: VideoInfo(
+        id: data.id,
+        title: _trimTitle(data.title),
+        author: data.author,
+        thumbnailUrl: data.thumbnailUrl,
+        platform: VideoSourcePlatform.facebook,
+      ),
+      streams: _streamsFrom(data),
     );
   }
 
-  @override
-  Future<List<DownloadStream>> getDownloadStreams(String urlOrId) async {
-    final data = await _remote.getVideo(urlOrId);
+  List<DownloadStream> _streamsFrom(FacebookVideoData data) {
     final options = <FacebookDownloadStream>[];
 
     if (data.hdUrl != null && data.hdUrl!.isNotEmpty) {

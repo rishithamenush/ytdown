@@ -20,21 +20,24 @@ class TiktokVideoRepositoryImpl implements VideoRepository {
   final Dio _dio;
 
   @override
-  Future<VideoInfo> getVideoInfo(String urlOrId) async {
+  Future<VideoBundle> getVideoBundle(String urlOrId) async {
+    // One TikWM request yields both the metadata and the media URLs, so fetch
+    // once and build both — previously this hit the API twice for one paste.
     final data = await _remote.getVideo(urlOrId);
-    return VideoInfo(
-      id: data.id,
-      title: _titleFrom(data),
-      author: data.author,
-      thumbnailUrl: data.cover,
-      duration: data.duration > 0 ? Duration(seconds: data.duration) : null,
-      platform: VideoSourcePlatform.tiktok,
+    return VideoBundle(
+      info: VideoInfo(
+        id: data.id,
+        title: _titleFrom(data),
+        author: data.author,
+        thumbnailUrl: data.cover,
+        duration: data.duration > 0 ? Duration(seconds: data.duration) : null,
+        platform: VideoSourcePlatform.tiktok,
+      ),
+      streams: _streamsFrom(data),
     );
   }
 
-  @override
-  Future<List<DownloadStream>> getDownloadStreams(String urlOrId) async {
-    final data = await _remote.getVideo(urlOrId);
+  List<DownloadStream> _streamsFrom(TiktokVideoData data) {
     final options = <TiktokDownloadStream>[];
 
     if (data.noWatermarkUrl.isNotEmpty) {

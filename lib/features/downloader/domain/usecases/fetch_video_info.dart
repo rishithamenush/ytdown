@@ -3,8 +3,8 @@ import '../entities/download_stream.dart';
 import '../entities/video_info.dart';
 import '../repositories/video_repository.dart';
 
-/// Bundles the two repository calls the home page makes back-to-back when
-/// the user submits a URL: fetch metadata + list downloadable streams.
+/// Validates a pasted URL and fetches its metadata + downloadable streams in
+/// a single repository round-trip.
 class FetchVideoInfo {
   const FetchVideoInfo(this._repository);
 
@@ -20,12 +20,11 @@ class FetchVideoInfo {
         'Unsupported link. Paste a YouTube, TikTok, or Facebook URL.',
       );
     }
-    final info = await _repository.getVideoInfo(trimmed);
-    final streams = await _repository.getDownloadStreams(trimmed);
-    if (streams.isEmpty) {
+    final bundle = await _repository.getVideoBundle(trimmed);
+    if (bundle.streams.isEmpty) {
       throw StateError('No downloadable streams found for this video');
     }
-    return FetchVideoResult(info: info, streams: streams);
+    return FetchVideoResult(info: bundle.info, streams: bundle.streams);
   }
 }
 

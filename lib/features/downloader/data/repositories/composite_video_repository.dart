@@ -2,7 +2,6 @@ import '../../../../core/utils/video_link_parser.dart';
 import '../../domain/entities/download_cancel_token.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
-import '../../domain/entities/video_info.dart';
 import '../../domain/repositories/video_repository.dart';
 import '../models/facebook_download_stream.dart';
 import '../models/tiktok_download_stream.dart';
@@ -35,12 +34,8 @@ class CompositeVideoRepository implements VideoRepository {
   }
 
   @override
-  Future<VideoInfo> getVideoInfo(String urlOrId) =>
-      _for(urlOrId).getVideoInfo(urlOrId);
-
-  @override
-  Future<List<DownloadStream>> getDownloadStreams(String urlOrId) =>
-      _for(urlOrId).getDownloadStreams(urlOrId);
+  Future<VideoBundle> getVideoBundle(String urlOrId) =>
+      _for(urlOrId).getVideoBundle(urlOrId);
 
   @override
   Future<String> downloadStream({

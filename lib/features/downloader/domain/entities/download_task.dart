@@ -3,9 +3,6 @@ import 'download_progress.dart';
 
 enum DownloadTaskStatus { downloading, completed, cancelled, failed }
 
-/// In-flight (or finished) download tracked by the UI. Mutable — the
-/// HomeNotifier mutates progress/status as bytes arrive and publishes
-/// new state snapshots to listeners.
 class DownloadTask {
   DownloadTask({
     required this.id,
@@ -32,9 +29,6 @@ class DownloadTask {
 
   bool get isActive => status == DownloadTaskStatus.downloading;
 
-  /// Serializes finished-state fields for persistence. Active progress and
-  /// the cancel token are intentionally dropped — restored tasks are never
-  /// resumed; they appear in the list as already-finished history rows.
   Map<String, dynamic> toJson() => {
         'id': id,
         'videoId': videoId,
@@ -72,7 +66,6 @@ class DownloadTask {
     return task;
   }
 
-  /// User-facing folder hint shown after a successful save.
   String get savedLocationLabel {
     final path = savedPath;
     if (path != null) {

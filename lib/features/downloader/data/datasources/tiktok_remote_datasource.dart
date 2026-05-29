@@ -1,13 +1,5 @@
 import 'package:dio/dio.dart';
 
-/// Fetches TikTok metadata + no-watermark download URLs via the public TikWM
-/// JSON API (https://www.tikwm.com/api/).
-///
-/// Why not scrape TikTok directly: TikTok's HTML/JS layout changes constantly,
-/// so HTML scrapers (and packages built on top of them) break every few weeks.
-/// TikWM is a third-party gateway that handles the heavy lifting, accepts
-/// short links (vt.tiktok.com, vm.tiktok.com) without separate redirect
-/// resolution, and has been stable for years.
 class TiktokRemoteDataSource {
   TiktokRemoteDataSource({Dio? dio}) : _dio = dio ?? Dio();
 
@@ -15,8 +7,6 @@ class TiktokRemoteDataSource {
 
   static const _endpoint = 'https://www.tikwm.com/api/';
 
-  /// Returns parsed metadata + media URLs for [url]. Accepts long or short
-  /// TikTok URLs (and even bare video IDs — TikWM handles them).
   Future<TiktokVideoData> getVideo(String url) async {
     final response = await _dio.get<Map<String, dynamic>>(
       _endpoint,
@@ -25,7 +15,6 @@ class TiktokRemoteDataSource {
         responseType: ResponseType.json,
         receiveTimeout: const Duration(seconds: 30),
         headers: {
-          // TikWM sometimes 4xx's bare requests — a browser-ish UA avoids it.
           'User-Agent':
               'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 '
                   '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
@@ -53,9 +42,6 @@ class TiktokRemoteDataSource {
   }
 }
 
-/// Plain Dart projection of the TikWM `data` object. Lives in the data layer
-/// — repositories translate this into the domain `VideoInfo` / `DownloadStream`
-/// entities.
 class TiktokVideoData {
   const TiktokVideoData({
     required this.id,

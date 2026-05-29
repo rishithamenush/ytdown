@@ -6,18 +6,6 @@ import 'package:dio/dio.dart';
 import '../../domain/entities/download_cancel_token.dart';
 import '../../domain/entities/download_progress.dart';
 
-/// IDM-style parallel segmented downloader.
-///
-/// Instead of pulling a file over one connection (which servers/CDNs commonly
-/// throttle), it asks for the total size, splits the byte range into several
-/// segments, and downloads them **concurrently** over separate connections —
-/// then stitches the parts together into the final file. Aggregate throughput
-/// is usually several times a single connection's, exactly like a download
-/// manager.
-///
-/// Safe fallbacks: if the server doesn't advertise range support, the size is
-/// unknown, or the file is small, it transparently degrades to a single
-/// streamed download so behaviour is never worse than before.
 class SegmentedDownloadService {
   SegmentedDownloadService({
     Dio? dio,
@@ -26,17 +14,9 @@ class SegmentedDownloadService {
   }) : _dio = dio ?? Dio();
 
   final Dio _dio;
-
-  /// Upper bound on parallel connections. 4–8 is the sweet spot — beyond that
-  /// CDNs start refusing or per-connection speed drops so the total is flat.
   final int maxConnections;
-
-  /// Files smaller than this aren't worth segmenting (the per-request overhead
-  /// dominates), so they take the single-connection path.
   final int minSegmentBytes;
 
-  /// Throttle progress callbacks to ~1 every 100ms so N parallel segments don't
-  /// flood the UI with rebuilds. The terminal 100% report is always emitted.
   static const _progressInterval = Duration(milliseconds: 100);
 
   // Force uncompressed transfer. With Content-Encoding compression on, a byte
@@ -81,9 +61,6 @@ class SegmentedDownloadService {
         cancelToken: cancelToken,
       );
     } on DioException catch (e) {
-      // Translate transport-level failures into a single user-facing message.
-      // Cancellation throws DownloadCancelledException (not a DioException),
-      // so it passes through untouched.
       throw _mapDioError(e);
     }
   }
@@ -121,7 +98,6 @@ class SegmentedDownloadService {
     };
   }
 
-  // ── segmented path ─────────────────────────────────────────────────────────
   Future<void> _downloadSegmented({
     required String url,
     required File output,
@@ -167,10 +143,6 @@ class SegmentedDownloadService {
           },
         ));
       }
-      // Default (eagerError: false) so every segment settles before we return
-      // — no orphaned futures surfacing as uncaught zone errors on failure.
-      // User-cancellation stays responsive regardless: every segment polls the
-      // same [cancelToken] between chunks and aborts together.
       await Future.wait(futures);
       cancelToken?.throwIfCancelled();
 
@@ -202,8 +174,6 @@ class SegmentedDownloadService {
         followRedirects: true,
         receiveTimeout: const Duration(minutes: 30),
         headers: {...headers, ..._noCompression, 'Range': 'bytes=$start-$end'},
-        // A healthy range reply is 206 (or 200). Treat 4xx/5xx as a failure so
-        // we surface an error instead of writing an error page into the part.
         validateStatus: (s) => s != null && s < 400,
       ),
       cancelToken: dioCancel,
@@ -248,7 +218,6 @@ class SegmentedDownloadService {
     }
   }
 
-  // ── single-connection fallback ───────────────────────────────────────────
   Future<void> _downloadSingle({
     required String url,
     required File output,
@@ -282,11 +251,6 @@ class SegmentedDownloadService {
     );
   }
 
-  // ── probing & planning ─────────────────────────────────────────────────────
-  /// Asks for a single byte (`Range: bytes=0-0`). A `206` with a
-  /// `Content-Range: bytes 0-0/<total>` header proves both range support and
-  /// the full size in one cheap round-trip — more reliable than HEAD, which
-  /// some CDNs answer differently than GET.
   Future<_Probe> _probe(String url, Map<String, String> headers) async {
     try {
       final resp = await _dio.get<List<int>>(
@@ -314,8 +278,7 @@ class SegmentedDownloadService {
         supportsRanges: acceptsRanges && (cl ?? 0) > 0,
       );
     } catch (_) {
-      // Probe failed (e.g. server rejects the Range probe) — fall back to a
-      // plain single download, which doesn't need the size up front.
+      // Probe failed — fall back to a plain single download.
       return const _Probe(totalBytes: 0, supportsRanges: false);
     }
   }
@@ -342,8 +305,6 @@ class SegmentedDownloadService {
   }
 }
 
-/// A download failure with a message that's safe to show the user directly
-/// (the notifier surfaces `toString()` as the task's error text).
 class DownloadException implements Exception {
   const DownloadException(this.message);
 

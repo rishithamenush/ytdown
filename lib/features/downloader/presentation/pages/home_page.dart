@@ -32,8 +32,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Rebuild on every keystroke so the search field's X button appears /
-    // disappears as the user types.
     _urlController.addListener(() => setState(() {}));
   }
 
@@ -63,7 +61,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  /// Opens an in-app browser so Cloudflare-protected hosts can set cookies.
   Future<bool> _ensureBrowserSession(String fileUrl) async {
     final host = Uri.tryParse(fileUrl)?.host ?? '';
     if (host.isEmpty) return false;
@@ -113,8 +110,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     _urlController.selection = TextSelection.fromPosition(
       TextPosition(offset: text.length),
     );
-    // Auto-fetch when the clipboard holds a supported link (YouTube, TikTok,
-    // Facebook, or a direct file URL such as an .mp4).
     if (VideoLinkParser.detect(text) != null) {
       await _fetch();
     }
@@ -158,9 +153,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: Column(
               children: [
                 TopBar(activeCount: state.activeTaskCount),
-                // Pinned input area — paste field, Get video button, and the
-                // related error banner stay above the fold while the video
-                // preview / quality tiles scroll underneath.
                 Padding(
                   padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
                   child: Column(

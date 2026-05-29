@@ -11,9 +11,6 @@ import '../widgets/download_task_tile.dart';
 import '../widgets/section_header.dart';
 import '../widgets/top_bar.dart';
 
-/// Library tab — lists in-flight and completed downloads. Tap a finished
-/// row to preview the saved file; tap the delete icon to remove the entry
-/// (with confirmation).
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
 

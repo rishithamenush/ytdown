@@ -3,10 +3,6 @@ import 'package:dio/dio.dart';
 import '../services/direct_link_http_profile.dart';
 import 'direct_link_access_exception.dart';
 
-/// Probes a direct file URL for the metadata shown before download: the
-/// filename, total size, and content type. Best-effort — every field has a
-/// sensible fallback, so a server that blocks HEAD or omits headers still
-/// yields a usable result (the download itself doesn't depend on this).
 class DirectLinkRemoteDataSource {
   DirectLinkRemoteDataSource({Dio? dio}) : _dio = dio ?? Dio();
 
@@ -21,17 +17,12 @@ class DirectLinkRemoteDataSource {
       cookieHeader: cookieHeader,
     );
 
-    // 1) HEAD — cheapest when supported.
     final viaHead = await _tryHead(url, headers);
     if (viaHead != null) return viaHead;
 
-    // 2) Range GET of a single byte — works on servers that reject HEAD and
-    //    also confirms range support via the Content-Range total.
     final viaRange = await _tryRangeGet(url, headers);
     if (viaRange != null) return viaRange;
 
-    // 3) Host blocks plain HTTP clients (Cloudflare, etc.) — allow fetch to
-    //    succeed so the UI can open an in-app browser for cookies.
     final status = await _peekStatus(url, headers);
     if (_isBlockedStatus(status) && cookieHeader == null) {
       return DirectLinkFileInfo(
@@ -194,8 +185,6 @@ class DirectLinkRemoteDataSource {
   }
 }
 
-/// Plain projection of a probed direct link. Lives in the data layer; the
-/// repository turns it into domain entities.
 class DirectLinkFileInfo {
   const DirectLinkFileInfo({
     required this.fileName,
@@ -208,6 +197,5 @@ class DirectLinkFileInfo {
   final int sizeBytes;
   final String contentType;
 
-  /// True when the host returns 403/401 to Dio but may work after WebView login.
   final bool requiresBrowserSession;
 }

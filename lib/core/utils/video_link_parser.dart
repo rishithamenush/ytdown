@@ -1,4 +1,3 @@
-/// Supported download sources and URL detection helpers.
 enum VideoSourcePlatform { youtube, tiktok, facebook, directLink }
 
 abstract final class VideoLinkParser {
@@ -8,8 +7,6 @@ abstract final class VideoLinkParser {
     if (_isYouTube(url)) return VideoSourcePlatform.youtube;
     if (_isTikTok(url)) return VideoSourcePlatform.tiktok;
     if (_isFacebook(url)) return VideoSourcePlatform.facebook;
-    // Checked last so a video-platform URL always wins. A direct link is any
-    // http(s) URL whose path ends in a known downloadable file extension.
     if (_isDirectFileLink(url)) return VideoSourcePlatform.directLink;
     return null;
   }
@@ -43,9 +40,6 @@ abstract final class VideoLinkParser {
     return fileExtensionOf(uri.path) != null;
   }
 
-  /// Returns the lowercase extension of [path] if it's a recognised
-  /// downloadable file type, otherwise null. Query strings/fragments must
-  /// already be stripped (pass `Uri.path`).
   static String? fileExtensionOf(String path) {
     final dot = path.lastIndexOf('.');
     if (dot == -1 || dot == path.length - 1) return null;

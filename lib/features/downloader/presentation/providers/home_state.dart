@@ -2,9 +2,6 @@ import '../../domain/entities/download_stream.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/entities/video_info.dart';
 
-/// Immutable snapshot of everything the home page renders. The notifier
-/// publishes new instances via [copyWith]; widgets `select` the slice they
-/// care about so unrelated rebuilds don't fire on every progress tick.
 class HomeState {
   const HomeState({
     this.video,

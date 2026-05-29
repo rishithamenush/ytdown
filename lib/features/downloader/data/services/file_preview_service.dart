@@ -2,18 +2,14 @@ import 'dart:io';
 
 import 'package:open_filex/open_filex.dart';
 
-/// Opens a downloaded file with the device's default handler (gallery,
-/// music player, etc.). Returns a user-friendly error string when the open
-/// fails, or null on success.
 class FilePreviewService {
   const FilePreviewService();
 
   Future<String?> open(String path) async {
     if (path.isEmpty) return 'No file path available for this download.';
 
-    // Reject the synthesized label-style paths emitted by StorageService when
-    // MediaStore's legacy DATA column is empty (e.g. "Movies/Vidoory/foo.mp4").
-    // OpenFilex needs a real absolute path or content URI.
+    // Synthesized label paths (e.g. "Movies/Vidoory/foo.mp4") are not real
+    // filesystem paths — OpenFilex needs an absolute path or content URI.
     final looksAbsolute = path.startsWith('/') ||
         path.startsWith('content://') ||
         path.startsWith('file://');

@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'root_shell.dart';
 
-/// In-app splash. The native (OS) splash hands off to this once Flutter is
-/// up; we fade in the brand mark + tagline, hold briefly, then transition
-/// to the root shell.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -185,10 +182,6 @@ class _SplashPageState extends State<SplashPage>
   }
 }
 
-/// Full-screen splash background. Unlike the shared AmbientBackground (which
-/// only seeds glows in the top half because content fills the bottom on app
-/// pages), this variant distributes glow blobs across the full height so the
-/// sparse splash layout still feels alive edge-to-edge.
 class _SplashBackground extends StatelessWidget {
   const _SplashBackground();
 

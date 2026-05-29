@@ -6,8 +6,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../data/services/direct_link_cookie_store.dart';
 import '../../data/services/direct_link_http_profile.dart';
 
-/// Lets the user pass a Cloudflare (or similar) check in a real WebView, then
-/// copies session cookies into [cookieStore] for Dio downloads.
 class DirectLinkBrowserSheet extends StatefulWidget {
   const DirectLinkBrowserSheet({
     super.key,

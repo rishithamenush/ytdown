@@ -3,10 +3,6 @@ import '../entities/download_progress.dart';
 import '../entities/download_stream.dart';
 import '../repositories/video_repository.dart';
 
-/// Wraps [VideoRepository.downloadStream] so the presentation layer talks to
-/// a use case instead of the repository directly. Today it's a thin pass-
-/// through; the seam exists so we can add cross-cutting concerns later
-/// (analytics, retry policy, queue limits) without touching every caller.
 class DownloadStreamUseCase {
   const DownloadStreamUseCase(this._repository);
 

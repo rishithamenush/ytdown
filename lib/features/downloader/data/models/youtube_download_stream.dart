@@ -2,12 +2,6 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../../domain/entities/download_stream.dart';
 
-/// Concrete [DownloadStream] backed by youtube_explode_dart's stream types.
-/// Internal to the data layer — the rest of the app sees it only through
-/// the [DownloadStream] interface.
-///
-/// Carries either a single stream (muxed video or audio-only) or a
-/// video+audio pair that the repository will merge with ffmpeg.
 class YoutubeDownloadStream implements DownloadStream {
   YoutubeDownloadStream._({
     required this.id,

@@ -1,21 +1,5 @@
 import 'package:dio/dio.dart';
 
-/// Fetches Facebook video metadata + direct CDN URLs for public videos /
-/// reels / watch posts. Videos behind login walls or marked private will
-/// fail (the caller surfaces a friendly error).
-///
-/// Strategy — try strongest first, give up only when all fail:
-///   1. fdown.net gateway. Long-running public scraper; takes a POST with
-///      `URLz=<fb_url>` and returns an HTML page with `<a id="hdlink">` and
-///      `<a id="sdlink">` anchors pointing at direct CDN MP4 URLs. This is
-///      the most reliable path because the gateway runs server-side and
-///      doesn't hit the app's logged-out wall.
-///   2. getfvid.com gateway. Same idea, different scraper. Some videos that
-///      fdown rejects work here and vice versa.
-///   3. Facebook's own embed endpoint (`/plugins/video.php?href=...`) —
-///      bypasses the login wall for many public posts.
-///   4. mbasic site (`mbasic.facebook.com`) — plain HTML with `<source>` tags.
-///   5. Direct www.facebook.com scrape — last resort.
 class FacebookRemoteDataSource {
   FacebookRemoteDataSource({Dio? dio})
       : _dio = dio ??
@@ -30,9 +14,7 @@ class FacebookRemoteDataSource {
 
   final Dio _dio;
 
-  // Gateways are slow, so cache the last successful result by URL. Re-pasting
-  // (or retrying) the same link returns instantly instead of re-scraping.
-  // Overwritten on every fresh fetch.
+  // Cache last successful result to avoid re-fetching the same URL.
   String? _cachedUrl;
   FacebookVideoData? _cachedData;
 
@@ -42,11 +24,6 @@ class FacebookRemoteDataSource {
   static const _mobileUa =
       'Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
-  // Facebook's own meta-crawler UA. Facebook serves og:tags (including
-  // og:video direct CDN URLs) publicly to this UA without a login wall —
-  // that's how every external site renders FB share-card previews. This is
-  // by far the most reliable extraction path when third-party gateways are
-  // unreachable (e.g. ISP-blocked).
   static const _crawlerUa = 'facebookexternalhit/1.1';
 
   Future<FacebookVideoData> getVideo(String url) async {
@@ -59,16 +36,6 @@ class FacebookRemoteDataSource {
     Object? lastError;
 
     for (final candidate in candidates) {
-      // Try strategies in order. The first one that returns at least one URL
-      // wins; if any throws, we keep going.
-      //
-      // Order rationale:
-      //  - Crawler UA first: it talks to www.facebook.com directly (always
-      //    reachable) and returns og:video tags publicly. No third-party
-      //    gateway, no ISP-blocked domains.
-      //  - Then gateways, for cases where og:video isn't populated (some
-      //    Reels, some pages).
-      //  - Then on-device direct strategies as last resort.
       final attempts = <Future<FacebookVideoData?> Function()>[
         () => _tryCrawler(candidate),
         () => _tryFdown(candidate),
@@ -85,8 +52,6 @@ class FacebookRemoteDataSource {
           final result = await attempt();
           if (result == null) continue;
           if (result.hdUrl != null || result.sdUrl != null) {
-            // Prefer the first attempt that yields HD. Otherwise keep looking
-            // but remember this as a fallback.
             if (result.hdUrl != null) {
               _cachedUrl = trimmed;
               _cachedData = result;
@@ -96,7 +61,6 @@ class FacebookRemoteDataSource {
           }
         } catch (e) {
           lastError = e;
-          // continue to next strategy
         }
       }
 
@@ -124,11 +88,9 @@ class FacebookRemoteDataSource {
       return '${base}Network is blocking the download services. '
           'Try a different Wi-Fi or mobile data connection.';
     }
-    // Otherwise it's most likely a private/deleted/login-walled video.
     return '${base}It may be private, deleted, or require login to view.';
   }
 
-  // ── gateway 1: fdown.net ─────────────────────────────────────────────────
   Future<FacebookVideoData?> _tryFdown(String originalUrl) async {
     final response = await _dio.post<String>(
       'https://fdown.net/download.php',
@@ -170,15 +132,9 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── strategy 0: Facebook crawler UA (best path) ──────────────────────────
-  /// Fetches the canonical Facebook URL with `User-Agent:
-  /// facebookexternalhit/1.1` — the UA FB itself uses to fetch og:tags when
-  /// other sites embed FB content. FB serves a stripped-down HTML page with
-  /// og:video tags pointing to direct CDN MP4 URLs, no login wall.
   Future<FacebookVideoData?> _tryCrawler(String originalUrl) async {
     final html = await _fetchHtml(originalUrl, ua: _crawlerUa);
 
-    // First try the JSON keys (some pages still ship `hd_src` to the crawler).
     final fromJson = _parseFromHtml(
       html: html,
       sourceUrl: originalUrl,
@@ -189,7 +145,6 @@ class FacebookRemoteDataSource {
       return fromJson;
     }
 
-    // og:video — the crawler endpoint's primary surface for video URLs.
     final og = _extractMeta(html, 'og:video') ??
         _extractMeta(html, 'og:video:secure_url') ??
         _extractMeta(html, 'og:video:url');
@@ -206,9 +161,6 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── gateway 2: fbdown.net ────────────────────────────────────────────────
-  /// Separate domain from fdown.net; same response shape (anchor IDs
-  /// `hdlink` / `sdlink`). Adds resilience against single-domain blocks.
   Future<FacebookVideoData?> _tryFbdown(String originalUrl) async {
     final response = await _dio.post<String>(
       'https://fbdown.net/download.php',
@@ -250,11 +202,6 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── gateway 3: snapsave.app ──────────────────────────────────────────────
-  /// snapsave.app returns JSON `{"status":"ok","data":"<html>"}` where the
-  /// nested HTML contains anchors labelled "Download HD" / "Download SD".
-  /// Some responses arrive as plain HTML when the server short-circuits
-  /// JS-side rendering; we parse both shapes.
   Future<FacebookVideoData?> _trySnapsave(String originalUrl) async {
     final response = await _dio.post<String>(
       'https://snapsave.app/action.php?lang=en',
@@ -279,9 +226,6 @@ class FacebookRemoteDataSource {
     final body = response.data;
     if (body == null || body.isEmpty) return null;
 
-    // Two response shapes:
-    //   1) JSON with embedded escaped HTML in `data`
-    //   2) Plain HTML (older / cached responses)
     var html = body;
     final jsonMatch =
         RegExp(r'"data"\s*:\s*"([\s\S]*?)"\s*[},]').firstMatch(body);
@@ -317,8 +261,7 @@ class FacebookRemoteDataSource {
     );
   }
 
-  /// Finds `<a ... id="<id>" ... href="<url>">` regardless of attribute order
-  /// and decodes HTML entities (`&amp;` etc.) from the matched URL.
+  /// Finds `<a id="[id]">` regardless of attribute order and decodes HTML entities.
   String? _matchAnchorById(String html, String id) {
     final pattern = RegExp(
       '''<a\\b([^>]*?)>''',
@@ -341,8 +284,7 @@ class FacebookRemoteDataSource {
     return null;
   }
 
-  /// Finds the first `<a href="<url>">...<text matching [labelRegex]>...</a>`
-  /// pair in [html].
+  /// Finds first anchor whose inner text matches [labelRegex].
   String? _matchAnchorByLabel(String html, RegExp labelRegex) {
     final anchor = RegExp(
       '''<a\\b([^>]*?)>([\\s\\S]*?)</a>''',
@@ -364,7 +306,6 @@ class FacebookRemoteDataSource {
     return null;
   }
 
-  // ── strategy 1: embed endpoint ────────────────────────────────────────────
   Future<FacebookVideoData?> _tryEmbed(String originalUrl) async {
     final embed = 'https://www.facebook.com/plugins/video.php'
         '?href=${Uri.encodeQueryComponent(originalUrl)}'
@@ -377,7 +318,6 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── strategy 2: mbasic ────────────────────────────────────────────────────
   Future<FacebookVideoData?> _tryMbasic(String originalUrl) async {
     final mbasic = originalUrl.replaceFirst(
       RegExp(r'https?://(www\.|web\.|m\.)?facebook\.com'),
@@ -389,15 +329,12 @@ class FacebookRemoteDataSource {
       cookies: 'locale=en_US;',
     );
 
-    // mbasic serves plain HTML with `<source src="https://...mp4">` for
-    // public videos. Take that if present.
     final sourceMatch = RegExp(
       r'''<source[^>]+src=["']([^"']+\.mp4[^"']*)["']''',
       caseSensitive: false,
     ).firstMatch(html);
     String? mp4 = sourceMatch?.group(1);
 
-    // Some mbasic posts use `<a href="...mp4">Download</a>` instead.
     if (mp4 == null) {
       final aMatch = RegExp(
         r'''<a[^>]+href=["']([^"']+\.mp4[^"']*)["']''',
@@ -407,8 +344,6 @@ class FacebookRemoteDataSource {
     }
 
     if (mp4 == null) {
-      // No direct source — fall through to the embed-style JSON parser in
-      // case mbasic returned a regular response with the same keys.
       return _parseFromHtml(
         html: html,
         sourceUrl: originalUrl,
@@ -427,7 +362,6 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── strategy 3: desktop www ──────────────────────────────────────────────
   Future<FacebookVideoData?> _tryDesktop(String originalUrl) async {
     final html = await _fetchHtml(originalUrl, ua: _desktopUa);
     return _parseFromHtml(
@@ -437,7 +371,6 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── shared HTML → data parser ────────────────────────────────────────────
   FacebookVideoData? _parseFromHtml({
     required String html,
     required String sourceUrl,
@@ -479,7 +412,6 @@ class FacebookRemoteDataSource {
     );
   }
 
-  // ── HTTP ─────────────────────────────────────────────────────────────────
   Future<String> _fetchHtml(
     String url, {
     required String ua,
@@ -513,7 +445,6 @@ class FacebookRemoteDataSource {
     return body;
   }
 
-  // ── parsing helpers ──────────────────────────────────────────────────────
   String? _extractUrl(String html, List<String> keys) {
     for (final key in keys) {
       // Match unicode-escaped colons too (`"hd_src":"https:\/\/..."`) which
@@ -718,7 +649,6 @@ class FacebookRemoteDataSource {
       final path = uri.path;
       final lowerPath = path.toLowerCase();
 
-      // Keep only the query keys that can affect video identity.
       final keptQuery = <String, String>{};
       final v = uri.queryParameters['v'];
       if (v != null && v.isNotEmpty) keptQuery['v'] = v;

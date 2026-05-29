@@ -15,7 +15,6 @@ import '../../domain/usecases/fetch_video_info.dart';
 import 'home_state.dart';
 import 'providers.dart';
 
-/// Owns home-page state and orchestrates fetch/download/cancel flows.
 class HomeNotifier extends Notifier<HomeState> {
   late final FetchVideoInfo _fetchVideoInfo;
   late final DownloadStreamUseCase _downloadStream;
@@ -24,8 +23,6 @@ class HomeNotifier extends Notifier<HomeState> {
   late final FilePreviewService _filePreview;
 
   int _taskIdCounter = 0;
-  // Throttle foreground-notification updates so we don't spam the OS on
-  // every chunk callback. ~750ms feels live without burning battery.
   DateTime _lastNotificationUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
@@ -42,18 +39,13 @@ class HomeNotifier extends Notifier<HomeState> {
   Future<void> _restoreHistory() async {
     final restored = await _history.load();
     if (restored.isEmpty) return;
-    // Keep the in-memory id counter ahead of anything we just loaded so a
-    // new download can't collide with a restored task's id.
     for (final t in restored) {
       final asInt = int.tryParse(t.id);
       if (asInt != null && asInt > _taskIdCounter) _taskIdCounter = asInt;
     }
-    // Active tasks started before the await won the race — preserve them at
-    // the top and append restored history below.
     state = state.copyWith(tasks: [...state.tasks, ...restored]);
   }
 
-  /// Fetch a video and its downloadable streams. Replaces any previous result.
   Future<void> fetchVideo(String urlOrId) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
@@ -73,7 +65,6 @@ class HomeNotifier extends Notifier<HomeState> {
     }
   }
 
-  /// Wipes the current search result + error. Active downloads keep running.
   void clearSearch() {
     state = state.copyWith(
       clearVideo: true,
@@ -82,8 +73,6 @@ class HomeNotifier extends Notifier<HomeState> {
     );
   }
 
-  /// Starts a download for [stream]. Caller should ensure permissions are
-  /// requested beforehand (the notifier does so as a defensive net).
   Future<void> startDownload(DownloadStream stream) async {
     final video = state.video;
     if (video == null) return;
@@ -112,8 +101,6 @@ class HomeNotifier extends Notifier<HomeState> {
 
   void cancelTask(DownloadTask task) => task.cancelToken.cancel();
 
-  /// Opens a completed task's saved file with the device's default handler.
-  /// Returns null on success, or a user-facing error message on failure.
   Future<String?> openTaskFile(DownloadTask task) {
     if (task.status != DownloadTaskStatus.completed) {
       return Future.value('This download is not finished yet.');
@@ -125,7 +112,6 @@ class HomeNotifier extends Notifier<HomeState> {
     return _filePreview.open(path);
   }
 
-  /// Removes a finished task from the list (doesn't affect saved files).
   void dismissTask(String id) {
     state = state.copyWith(
       tasks: state.tasks.where((t) => t.id != id).toList(),
@@ -133,7 +119,6 @@ class HomeNotifier extends Notifier<HomeState> {
     _persistHistory();
   }
 
-  /// Removes every non-active task in one go.
   void clearFinishedTasks() {
     state = state.copyWith(
       tasks: state.tasks.where((t) => t.isActive).toList(),
@@ -141,8 +126,6 @@ class HomeNotifier extends Notifier<HomeState> {
     _persistHistory();
   }
 
-  /// Look up the task associated with [stream] for the currently-loaded video,
-  /// or null if no such task exists.
   DownloadTask? taskForStream(DownloadStream stream) {
     final videoId = state.video?.id;
     if (videoId == null) return null;
@@ -188,13 +171,9 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   void _persistHistory() {
-    // Fire-and-forget: history persistence shouldn't block the UI, and the
-    // service serializes writes internally so out-of-order calls are safe.
     unawaited(_history.save(state.tasks));
   }
 
-  /// Re-emit the same task list to trigger a rebuild after mutating a task in
-  /// place. Cheap — Riverpod compares list identity, not contents.
   void _publishTaskUpdate() {
     state = state.copyWith(tasks: List.of(state.tasks));
   }

@@ -7,7 +7,6 @@ import 'home_page.dart';
 import 'library_page.dart';
 import 'settings_page.dart';
 
-/// Root navigation shell. Three primary tabs: Home, Library, and Settings.
 class RootShell extends ConsumerStatefulWidget {
   const RootShell({super.key});
 
@@ -26,8 +25,6 @@ class _RootShellState extends ConsumerState<RootShell> {
       homeNotifierProvider.select((s) => s.activeTaskCount),
     );
 
-    // IndexedStack keeps all pages alive so search state / scroll position
-    // survive tab switches.
     const pages = <Widget>[
       HomePage(),
       LibraryPage(),

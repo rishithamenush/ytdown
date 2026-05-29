@@ -4,12 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   AppTheme._();
 
-  // Unified green palette — matches launcher icon + splash screen.
   static const Color brandPrimary = Color(0xFF22C55E);
   static const Color brandSecondary = Color(0xFF16A34A);
   static const Color brandAccent = Color(0xFF06B6D4);
 
-  // Aliases retained for the download CTA (same green, distinct semantic name).
   static const Color downloadGreen = brandPrimary;
   static const Color downloadGreenDark = brandSecondary;
 
@@ -134,8 +132,6 @@ class AppTheme {
       ),
     );
 
-    // Apply Plus Jakarta Sans across every text style — keeps the sizes/weights
-    // defined above and just swaps the font family.
     final textTheme = GoogleFonts.plusJakartaSansTextTheme(baseTextTheme);
 
     return ThemeData(

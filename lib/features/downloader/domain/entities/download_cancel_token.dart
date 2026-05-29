@@ -1,8 +1,3 @@
-/// Cooperative cancellation handle handed to the repository when a download
-/// starts. The UI calls [cancel] to abort; the data layer polls [isCancelled]
-/// (or throws via [throwIfCancelled]) between chunks.
-///
-/// Lives in domain — both the use case and the data layer need it.
 class DownloadCancelToken {
   bool _cancelled = false;
 

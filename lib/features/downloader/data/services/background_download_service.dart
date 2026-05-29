@@ -8,8 +8,6 @@ void _backgroundTaskCallback() {
   FlutterForegroundTask.setTaskHandler(_DownloadKeepAliveHandler());
 }
 
-/// No-op handler. Its only job is to keep the foreground service running so
-/// the OS does not kill the main isolate while downloads are in progress.
 class _DownloadKeepAliveHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {}
@@ -55,7 +53,6 @@ class BackgroundDownloadService {
     _initialized = true;
   }
 
-  /// Request notification permission on Android 13+. Safe to call repeatedly.
   static Future<void> requestPermissions() async {
     if (!Platform.isAndroid) return;
     final notif = await FlutterForegroundTask.checkNotificationPermission();

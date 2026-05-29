@@ -3,10 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
-/// Branded confirmation dialog. Matches the app's rounded-card aesthetic:
-/// 20px radius, hairline border, tinted icon avatar, Plus Jakarta Sans CTA.
-///
-/// Resolves to `true` when the user confirms, `false` (or null) otherwise.
 Future<bool> showConfirmDialog({
   required BuildContext context,
   required String title,

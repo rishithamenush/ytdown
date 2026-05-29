@@ -18,14 +18,6 @@ import '../../domain/repositories/video_repository.dart';
 import '../../domain/usecases/download_stream_use_case.dart';
 import '../../domain/usecases/fetch_video_info.dart';
 
-/// Riverpod DI graph for the downloader feature.
-///
-/// All construction lives here so swapping a repository implementation later
-/// (e.g. mocking for tests) only requires overriding one provider — every
-/// downstream consumer keeps its imports unchanged.
-
-// ── data layer ──────────────────────────────────────────────────────────────
-
 final youtubeRemoteDataSourceProvider = Provider<YoutubeRemoteDataSource>((ref) {
   final ds = YoutubeRemoteDataSource();
   ref.onDispose(ds.dispose);
@@ -49,8 +41,6 @@ final directLinkRemoteDataSourceProvider =
 final directLinkCookieStoreProvider = Provider<DirectLinkCookieStore>((ref) {
   return DirectLinkCookieStore();
 });
-
-// ── domain → repository implementations ─────────────────────────────────────
 
 final youtubeVideoRepositoryProvider = Provider<VideoRepository>((ref) {
   final remote = ref.watch(youtubeRemoteDataSourceProvider);
@@ -102,8 +92,6 @@ final downloadHistoryServiceProvider = Provider<DownloadHistoryService>((ref) {
 final filePreviewServiceProvider = Provider<FilePreviewService>((ref) {
   return const FilePreviewService();
 });
-
-// ── use cases ───────────────────────────────────────────────────────────────
 
 final fetchVideoInfoProvider = Provider<FetchVideoInfo>((ref) {
   return FetchVideoInfo(ref.watch(videoRepositoryProvider));

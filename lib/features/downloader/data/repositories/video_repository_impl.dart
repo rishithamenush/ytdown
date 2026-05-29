@@ -14,9 +14,6 @@ import '../models/youtube_download_stream.dart';
 import '../services/merge_service.dart';
 import '../services/storage_service.dart';
 
-/// YouTube-backed implementation of [VideoRepository]. Translates the data-
-/// source's youtube_explode types into pure domain entities and orchestrates
-/// merge + storage for completed downloads.
 class VideoRepositoryImpl implements VideoRepository {
   VideoRepositoryImpl(this._remote);
 
@@ -24,9 +21,6 @@ class VideoRepositoryImpl implements VideoRepository {
 
   @override
   Future<VideoBundle> getVideoBundle(String urlOrId) async {
-    // Metadata (videos.get) and the stream manifest come from two independent
-    // YouTube requests, so fire them together rather than one-after-another —
-    // the bundle is ready as soon as the slower of the two returns.
     final (video, manifest) = await (
       _remote.getVideo(urlOrId),
       _remote.getManifest(urlOrId),
@@ -173,12 +167,6 @@ class VideoRepositoryImpl implements VideoRepository {
 
     try {
       cancelToken?.throwIfCancelled();
-      // The video-only and audio-only tracks are independent streams on
-      // separate connections, so download them concurrently. The audio track
-      // is small relative to the video, so its transfer now overlaps the
-      // video's instead of being stacked on top — the merge starts as soon as
-      // the (slower) video finishes. Both onChunk callbacks mutate `downloaded`
-      // on the same isolate, so the running total stays correct.
       await Future.wait([
         _streamToFile(
           info: videoStream,

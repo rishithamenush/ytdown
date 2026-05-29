@@ -15,9 +15,6 @@ import '../services/direct_link_http_profile.dart';
 import '../services/segmented_download_service.dart';
 import '../services/storage_service.dart';
 
-/// Handles plain "direct link" downloads: the URL already points at a file, so
-/// there's nothing to scrape — probe it for a name/size, then fetch it with
-/// the segmented (multi-connection) downloader.
 class DirectLinkVideoRepositoryImpl implements VideoRepository {
   DirectLinkVideoRepositoryImpl(
     this._remote,
@@ -120,7 +117,6 @@ class DirectLinkVideoRepositoryImpl implements VideoRepository {
   @override
   void dispose() {}
 
-  // ── helpers ────────────────────────────────────────────────────────────────
   String _resolveExtension(DirectLinkFileInfo probe, String url) {
     final fromName = _extOf(probe.fileName);
     if (fromName != null) return fromName;

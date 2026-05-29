@@ -6,9 +6,6 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../domain/entities/download_task.dart';
 
-/// Persists finished download tasks to a JSON file so the Downloads list
-/// survives app restarts. Active (in-flight) downloads are not persisted —
-/// they would be unresumable on next launch anyway.
 class DownloadHistoryService {
   DownloadHistoryService();
 
@@ -44,17 +41,12 @@ class DownloadHistoryService {
     }
   }
 
-  /// Persists only the non-active tasks. Caller can pass the full task list;
-  /// active ones are filtered out so an in-flight download isn't frozen on
-  /// disk as "downloading" if the process dies right after this write.
   Future<void> save(List<DownloadTask> tasks) {
     final snapshot = tasks
         .where((t) => !t.isActive)
         .map((t) => t.toJson())
         .toList(growable: false);
     final next = _writeQueue.then((_) => _writeNow(snapshot));
-    // Swallow errors in the chained future so one bad write doesn't poison
-    // every subsequent save call.
     _writeQueue = next.catchError((_) {});
     return next;
   }

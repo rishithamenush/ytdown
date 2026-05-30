@@ -221,12 +221,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                         const SizedBox(height: 16),
                         ErrorBanner(message: state.error!),
                       ],
-                      if (state.video == null &&
-                          !state.loading &&
-                          state.error == null) ...[
-                        const SizedBox(height: 28),
-                        const _SupportedPlatformsHint(),
-                      ],
                     ],
                   ),
                 ),
@@ -240,6 +234,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                         padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
                         sliver: SliverList.list(
                           children: [
+                            if (state.video == null &&
+                                !state.loading &&
+                                state.error == null)
+                              const _SupportedPlatformsHint(),
                             if (state.video != null) ...[
                               VideoPreviewCard(video: state.video!),
                               const SizedBox(height: 24),

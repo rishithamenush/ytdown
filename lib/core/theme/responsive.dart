@@ -53,4 +53,19 @@ class Responsive {
     final size = MediaQuery.sizeOf(c);
     return math.min(size.width, size.height);
   }
+
+  /// Glass bottom bar (68) + outer padding (12) + system inset.
+  static const double bottomNavBarHeight = 68;
+  static const double bottomNavOuterPadding = 12;
+
+  static double bottomNavInset(BuildContext c) {
+    return bottomNavBarHeight +
+        bottomNavOuterPadding +
+        MediaQuery.paddingOf(c).bottom;
+  }
+
+  /// List/scroll padding so content clears the floating bottom nav.
+  static double scrollBottomPadding(BuildContext c, {double extra = 16}) {
+    return bottomNavInset(c) + extra;
+  }
 }

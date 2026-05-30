@@ -77,8 +77,10 @@ class SettingsPage extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       body: Stack(
+        fit: StackFit.expand,
         children: [
           const Positioned.fill(child: AmbientBackground()),
           SafeArea(
@@ -91,7 +93,12 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 Expanded(
                   child: ListView(
-                    padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 40),
+                    padding: EdgeInsets.fromLTRB(
+                      hPad,
+                      8,
+                      hPad,
+                      Responsive.scrollBottomPadding(context),
+                    ),
                     physics: const BouncingScrollPhysics(),
                     children: [
                       _SectionTitle(text: 'About'),

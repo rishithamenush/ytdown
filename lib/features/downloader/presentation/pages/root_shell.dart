@@ -1,9 +1,11 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/responsive.dart';
 import '../providers/home_notifier.dart';
 import 'home_page.dart';
 import 'library_page.dart';
@@ -34,13 +36,24 @@ class _RootShellState extends ConsumerState<RootShell> {
     ];
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       extendBody: true,
-      body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: _GlassBottomBar(
-        index: _index,
-        onChanged: (i) => setState(() => _index = i),
-        libraryBadge: activeCount,
-        isDark: isDark,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          IndexedStack(index: _index, children: pages),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _GlassBottomBar(
+              index: _index,
+              onChanged: (i) => setState(() => _index = i),
+              libraryBadge: activeCount,
+              isDark: isDark,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -61,58 +74,62 @@ class _GlassBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final maxBarWidth = math.min(
+      460.0,
+      MediaQuery.sizeOf(context).width - 32,
+    );
+
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        // Keep the bar compact and centred on tablets instead of letting the
-        // three items spread across the full width.
-        child: Center(
+        child: Align(
+          alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
+            constraints: BoxConstraints(maxWidth: maxBarWidth),
             child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              height: 68,
-              decoration: BoxDecoration(
-                color: AppTheme.glassFill(isDark),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.5),
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  height: Responsive.bottomNavBarHeight,
+                  decoration: BoxDecoration(
+                    color: AppTheme.glassFill(isDark),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.5),
+                    ),
+                    boxShadow: AppTheme.softShadow(isDark, y: 12, blur: 28),
+                  ),
+                  child: Row(
+                    children: [
+                      _NavItem(
+                        icon: Icons.home_outlined,
+                        activeIcon: Icons.home_rounded,
+                        label: 'Home',
+                        selected: index == 0,
+                        onTap: () => onChanged(0),
+                      ),
+                      _NavItem(
+                        icon: Icons.video_library_outlined,
+                        activeIcon: Icons.video_library_rounded,
+                        label: 'Library',
+                        selected: index == 1,
+                        badgeCount: libraryBadge,
+                        onTap: () => onChanged(1),
+                      ),
+                      _NavItem(
+                        icon: Icons.settings_outlined,
+                        activeIcon: Icons.settings_rounded,
+                        label: 'Settings',
+                        selected: index == 2,
+                        onTap: () => onChanged(2),
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: AppTheme.softShadow(isDark, y: 12, blur: 28),
-              ),
-              child: Row(
-                children: [
-                  _NavItem(
-                    icon: Icons.home_outlined,
-                    activeIcon: Icons.home_rounded,
-                    label: 'Home',
-                    selected: index == 0,
-                    onTap: () => onChanged(0),
-                  ),
-                  _NavItem(
-                    icon: Icons.video_library_outlined,
-                    activeIcon: Icons.video_library_rounded,
-                    label: 'Library',
-                    selected: index == 1,
-                    badgeCount: libraryBadge,
-                    onTap: () => onChanged(1),
-                  ),
-                  _NavItem(
-                    icon: Icons.settings_outlined,
-                    activeIcon: Icons.settings_rounded,
-                    label: 'Settings',
-                    selected: index == 2,
-                    onTap: () => onChanged(2),
-                  ),
-                ],
               ),
             ),
-          ),
-        ),
           ),
         ),
       ),
@@ -205,8 +222,6 @@ class _NavItem extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
-                // Shrink-to-fit so narrow phones + large accessibility fonts
-                // never overflow the three-across nav row.
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,

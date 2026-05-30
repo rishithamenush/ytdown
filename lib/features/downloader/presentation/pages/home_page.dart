@@ -150,8 +150,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         VideoLinkParser.detect(pastedUrl) == VideoSourcePlatform.directLink;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       body: Stack(
+        fit: StackFit.expand,
         children: [
           const Positioned.fill(child: AmbientBackground()),
           SafeArea(
@@ -231,7 +233,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                     slivers: [
                       SliverPadding(
-                        padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
+                        padding: EdgeInsets.fromLTRB(
+                          hPad,
+                          16,
+                          hPad,
+                          Responsive.scrollBottomPadding(context),
+                        ),
                         sliver: SliverList.list(
                           children: [
                             if (state.video == null &&

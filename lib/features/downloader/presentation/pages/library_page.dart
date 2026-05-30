@@ -160,8 +160,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         state.tasks.isNotEmpty && selectedCount == state.tasks.length;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       body: Stack(
+        fit: StackFit.expand,
         children: [
           const Positioned.fill(child: AmbientBackground()),
           SafeArea(
@@ -196,7 +198,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                           hPad,
                           8,
                           hPad,
-                          _selectionMode && selectedCount > 0 ? 100 : 32,
+                          _selectionMode && selectedCount > 0
+                              ? Responsive.scrollBottomPadding(context,
+                                  extra: 84)
+                              : Responsive.scrollBottomPadding(context),
                         ),
                         sliver: SliverList.list(
                           children: [
@@ -262,7 +267,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             Positioned(
               left: hPad,
               right: hPad,
-              bottom: 16,
+              bottom: Responsive.bottomNavInset(context) + 8,
               child: SafeArea(
                 top: false,
                 child: _SelectionActionBar(

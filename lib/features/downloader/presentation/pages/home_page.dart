@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../../../core/utils/video_link_parser.dart';
 import '../../data/models/direct_link_download_stream.dart';
@@ -220,6 +221,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                         const SizedBox(height: 16),
                         ErrorBanner(message: state.error!),
                       ],
+                      if (state.video == null &&
+                          !state.loading &&
+                          state.error == null) ...[
+                        const SizedBox(height: 28),
+                        const _SupportedPlatformsHint(),
+                      ],
                     ],
                   ),
                 ),
@@ -296,6 +303,99 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Supported platforms hint ──────────────────────────────────────────────────
+
+class _SupportedPlatformsHint extends StatelessWidget {
+  const _SupportedPlatformsHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Text(
+          'Supported platforms',
+          style: theme.textTheme.bodySmall?.copyWith(
+            letterSpacing: 0.4,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.center,
+          children: const [
+            _PlatformChip(
+              label: 'YouTube',
+              icon: Icons.smart_display_rounded,
+              color: Color(0xFFFF0033),
+            ),
+            _PlatformChip(
+              label: 'TikTok',
+              icon: Icons.music_note_rounded,
+              color: Color(0xFF69C9D0),
+            ),
+            _PlatformChip(
+              label: 'Facebook',
+              icon: Icons.people_alt_rounded,
+              color: Color(0xFF1877F2),
+            ),
+            _PlatformChip(
+              label: 'Direct Links',
+              icon: Icons.link_rounded,
+              color: AppTheme.brandPrimary,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PlatformChip extends StatelessWidget {
+  const _PlatformChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.12 : 0.08),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
             ),
           ),
         ],

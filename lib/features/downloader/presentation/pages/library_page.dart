@@ -427,8 +427,8 @@ class _EmptyLibrary extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'Head to Home, paste a YouTube, TikTok, or Facebook link, '
-              'and your downloads will appear here.',
+              'Head to Home, paste a YouTube, TikTok, Facebook link, '
+              'or direct file URL — your downloads will appear here.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

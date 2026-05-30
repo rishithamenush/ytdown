@@ -60,3 +60,4 @@ class VidooryApp extends StatelessWidget {
     );
   }
 }
+

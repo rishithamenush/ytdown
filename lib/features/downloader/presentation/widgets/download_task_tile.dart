@@ -6,6 +6,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
 import 'app_selection_checkbox.dart';
+import 'pressable.dart';
 
 class DownloadTaskTile extends StatelessWidget {
   const DownloadTaskTile({
@@ -79,8 +80,11 @@ class DownloadTaskTile extends StatelessWidget {
     final theme = Theme.of(context);
     final progress = task.progress;
     final accent = _accent(theme);
+    final tappable = selectionMode || _canOpen || onLongPress != null;
 
-    return Card(
+    return Pressable(
+      enabled: tappable,
+      child: Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: selectionMode
@@ -187,6 +191,7 @@ class DownloadTaskTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
       ),
     );

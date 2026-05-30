@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/responsive.dart';
 import '../providers/home_notifier.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/pressable.dart';
 import '../widgets/top_bar.dart';
 
 const _appId = 'com.vidoory.app';
@@ -326,7 +327,10 @@ class _SettingsRow extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return InkWell(onTap: onTap, child: content);
+      return Pressable(
+        scale: 0.985,
+        child: InkWell(onTap: onTap, child: content),
+      );
     }
     return content;
   }

@@ -32,15 +32,12 @@ class TopBar extends StatelessWidget {
             width: logoSize,
             height: logoSize,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(logoSize * 0.28),
+              borderRadius: BorderRadius.circular(logoSize * 0.30),
               gradient: AppTheme.downloadGradient,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.downloadGreen.withValues(alpha: 0.5),
-                  blurRadius: 22,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.18),
+              ),
+              boxShadow: AppTheme.brandGlow(opacity: 0.5, blur: 22, y: 8),
             ),
             child: Icon(
               Icons.download_rounded,
@@ -56,6 +53,8 @@ class TopBar extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.4,
@@ -66,6 +65,8 @@ class TopBar extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,

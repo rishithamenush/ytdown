@@ -8,12 +8,18 @@ class AppTheme {
   static const Color brandSecondary = Color(0xFF16A34A);
   static const Color brandAccent = Color(0xFF06B6D4);
 
+  /// Brighter tint used at the top-left of brand gradients so buttons and
+  /// the logo read as lit-from-above rather than flat fills.
+  static const Color brandHighlight = Color(0xFF4ADE80);
+
   static const Color downloadGreen = brandPrimary;
   static const Color downloadGreenDark = brandSecondary;
 
-  static const Color darkBg = Color(0xFF07070A);
-  static const Color darkSurface = Color(0xFF111116);
-  static const Color darkSurfaceHigh = Color(0xFF181820);
+  // Dark surfaces carry a faint cool tint so stacked cards separate from the
+  // near-black background without resorting to heavy borders.
+  static const Color darkBg = Color(0xFF06070B);
+  static const Color darkSurface = Color(0xFF121219);
+  static const Color darkSurfaceHigh = Color(0xFF1B1B25);
   static const Color darkBorder = Color(0x1FFFFFFF);
 
   static const Color lightBg = Color(0xFFF6F6FA);
@@ -21,22 +27,56 @@ class AppTheme {
   static const Color lightBorder = Color(0x14000000);
 
   static const LinearGradient brandGradient = LinearGradient(
-    colors: [brandPrimary, brandSecondary],
+    colors: [brandHighlight, brandPrimary, brandSecondary],
+    stops: [0, 0.55, 1],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  static const LinearGradient downloadGradient = LinearGradient(
-    colors: [downloadGreen, downloadGreenDark],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  static const LinearGradient downloadGradient = brandGradient;
 
   static const LinearGradient subtleGradient = LinearGradient(
-    colors: [Color(0xFF0E0E14), Color(0xFF07070A)],
+    colors: [Color(0xFF0D0E15), Color(0xFF06070B)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
+
+  /// Translucent fill for glass surfaces (nav bar, floating bars) sitting in
+  /// front of a [BackdropFilter]. Tuned per brightness so the blur reads.
+  static Color glassFill(bool isDark) =>
+      isDark ? const Color(0xFF14141C).withValues(alpha: 0.72)
+             : Colors.white.withValues(alpha: 0.72);
+
+  /// A faint top highlight + transparent bottom that gives cards and tiles a
+  /// subtle "lit from above" sheen when layered over a solid surface.
+  static LinearGradient cardSheen(bool isDark) => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: isDark ? 0.05 : 0.5),
+          Colors.white.withValues(alpha: 0),
+        ],
+      );
+
+  /// Soft drop shadow used by floating elements (cards, dialogs, bars).
+  static List<BoxShadow> softShadow(bool isDark, {double y = 12, double blur = 28}) =>
+      [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.10),
+          blurRadius: blur,
+          offset: Offset(0, y),
+        ),
+      ];
+
+  /// Coloured glow used behind the primary download affordances.
+  static List<BoxShadow> brandGlow({double opacity = 0.4, double blur = 22, double y = 10}) =>
+      [
+        BoxShadow(
+          color: brandPrimary.withValues(alpha: opacity),
+          blurRadius: blur,
+          offset: Offset(0, y),
+        ),
+      ];
 
   static ThemeData dark() {
     const scheme = ColorScheme.dark(

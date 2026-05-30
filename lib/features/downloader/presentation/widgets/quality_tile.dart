@@ -7,6 +7,7 @@ import '../../data/models/direct_link_download_stream.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_stream.dart';
 import '../../domain/entities/download_task.dart';
+import 'pressable.dart';
 
 class QualityTile extends StatelessWidget {
   const QualityTile({
@@ -91,8 +92,11 @@ class QualityTile extends StatelessWidget {
     final done = completedTask != null;
     final progress = activeTask?.progress;
     final canPreview = done && (completedTask!.savedPath?.isNotEmpty ?? false);
+    final tappable = canPreview || onTap != null;
 
-    return Card(
+    return Pressable(
+      enabled: tappable,
+      child: Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: canPreview ? onOpenCompleted : onTap,
@@ -128,7 +132,14 @@ class QualityTile extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Text(_title(), style: theme.textTheme.titleMedium),
+                            Flexible(
+                              child: Text(
+                                _title(),
+                                style: theme.textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -178,6 +189,7 @@ class QualityTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

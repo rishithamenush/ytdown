@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,54 +61,58 @@ class _GlassBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final borderColor =
-        isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
-    final surface = theme.colorScheme.surface.withValues(alpha: 0.92);
-
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Container(
-          height: 68,
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.10),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+        // Keep the bar compact and centred on tablets instead of letting the
+        // three items spread across the full width.
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              height: 68,
+              decoration: BoxDecoration(
+                color: AppTheme.glassFill(isDark),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.5),
+                ),
+                boxShadow: AppTheme.softShadow(isDark, y: 12, blur: 28),
               ),
-            ],
+              child: Row(
+                children: [
+                  _NavItem(
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                    label: 'Home',
+                    selected: index == 0,
+                    onTap: () => onChanged(0),
+                  ),
+                  _NavItem(
+                    icon: Icons.video_library_outlined,
+                    activeIcon: Icons.video_library_rounded,
+                    label: 'Library',
+                    selected: index == 1,
+                    badgeCount: libraryBadge,
+                    onTap: () => onChanged(1),
+                  ),
+                  _NavItem(
+                    icon: Icons.settings_outlined,
+                    activeIcon: Icons.settings_rounded,
+                    label: 'Settings',
+                    selected: index == 2,
+                    onTap: () => onChanged(2),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: Row(
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Home',
-                selected: index == 0,
-                onTap: () => onChanged(0),
-              ),
-              _NavItem(
-                icon: Icons.video_library_outlined,
-                activeIcon: Icons.video_library_rounded,
-                label: 'Library',
-                selected: index == 1,
-                badgeCount: libraryBadge,
-                onTap: () => onChanged(1),
-              ),
-              _NavItem(
-                icon: Icons.settings_outlined,
-                activeIcon: Icons.settings_rounded,
-                label: 'Settings',
-                selected: index == 2,
-                onTap: () => onChanged(2),
-              ),
-            ],
+        ),
           ),
         ),
       ),
@@ -199,15 +205,24 @@ class _NavItem extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 220),
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 13,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    letterSpacing: 0.2,
+                // Shrink-to-fit so narrow phones + large accessibility fonts
+                // never overflow the three-across nav row.
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 220),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 13,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                      child: Text(label, maxLines: 1, softWrap: false),
+                    ),
                   ),
-                  child: Text(label),
                 ),
               ],
             ),

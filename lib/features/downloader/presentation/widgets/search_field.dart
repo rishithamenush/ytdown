@@ -39,8 +39,18 @@ class SearchField extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppTheme.brandPrimary.withValues(alpha: 0.12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.brandPrimary.withValues(alpha: 0.20),
+                  AppTheme.brandPrimary.withValues(alpha: 0.07),
+                ],
+              ),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppTheme.brandPrimary.withValues(alpha: 0.28),
+              ),
             ),
             child: const Icon(
               Icons.link_rounded,

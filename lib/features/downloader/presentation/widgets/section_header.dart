@@ -25,11 +25,21 @@ class SectionHeader extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: AppTheme.brandPrimary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(9),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.brandPrimary.withValues(alpha: 0.20),
+                    AppTheme.brandPrimary.withValues(alpha: 0.07),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppTheme.brandPrimary.withValues(alpha: 0.28),
+                ),
               ),
               child: Icon(icon, color: AppTheme.brandPrimary, size: 18),
             ),

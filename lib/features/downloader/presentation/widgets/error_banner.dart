@@ -8,23 +8,35 @@ class ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final error = theme.colorScheme.error;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.error.withValues(alpha: 0.12),
+        color: error.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: theme.colorScheme.error.withValues(alpha: 0.4)),
+        border: Border.all(color: error.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded, color: theme.colorScheme.error),
-          const SizedBox(width: 10),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: error.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.error_outline_rounded, color: error, size: 20),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: theme.colorScheme.error),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: error,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
             ),
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import 'pressable.dart';
 
 Future<bool> showConfirmDialog({
   required BuildContext context,
@@ -72,7 +73,8 @@ class _ConfirmDialog extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -137,6 +139,7 @@ class _ConfirmDialog extends StatelessWidget {
               ),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -156,7 +159,8 @@ class _SecondaryButton extends StatelessWidget {
     final borderColor =
         isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
 
-    return Material(
+    return Pressable(
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -179,6 +183,7 @@ class _SecondaryButton extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -196,7 +201,8 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Pressable(
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -230,6 +236,7 @@ class _PrimaryButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
